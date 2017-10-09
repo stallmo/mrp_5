@@ -27,4 +27,5 @@ The requirements.txt should contain all packages that are needed to run the code
 5. when the code is tested and ready, merge the branch into master
 
 Getting familiar with git: http://rogerdudler.github.io/git-guide/
+
 Useful for installing python and managing virtual environments: https://conda.io/docs/user-guide/install/index.html
