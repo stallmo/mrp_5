@@ -2,3 +2,5 @@ pandas
 numpy
 scipy
 sklearn
+lxml
+opencv-python
