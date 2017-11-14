@@ -1,6 +1,6 @@
 #import Dario's code (folder 'code_behaviorANDpersonality_masterProject/' needs to be in the code folder)
 import sys
-sys.path.insert(0, './code/code_behaviorANDpersonality_masterProject')
+sys.path.insert(0, './code_behaviorANDpersonality_masterProject/')
 
 from data_extractor import *
 import pandas as pd
