@@ -39,3 +39,7 @@ def normalize_data(df, columns = None):
         df_scaled = pd.DataFrame(scaled_values, columns = columns)
     
     return df_scaled
+
+def recalculate_joint_positions(df):
+    # Read x, y and z values per joint.U
+    pass

@@ -1,9 +1,10 @@
 import pandas as pd
-import feature_engineering.py
 from math import pow, sqrt
-from statistics import mean
 
-def speed(data_frames : pd.DataFrame, start=0, end=None, step=1):
+
+
+
+def speed(data_frames , start=0, end=None, step=1):
     """
     Calculates the average speed of the head
     :param data_frames: pandas dataframe.
@@ -19,9 +20,9 @@ def speed(data_frames : pd.DataFrame, start=0, end=None, step=1):
     z_label = 'head_z'
 
 
-    lastx = data_frames[0][x_label]
-    lasty = data_frames[0][y_label]
-    lastz = data_frames[0][z_label]
+    lastx = data_frames.iloc[0][x_label]
+    lasty = data_frames.iloc[0][y_label]
+    lastz = data_frames.iloc[0][z_label]
     if(end == None):
         stop = len(data_frames)
     else:
@@ -29,8 +30,9 @@ def speed(data_frames : pd.DataFrame, start=0, end=None, step=1):
 
 
     speeds = []
+    # TODO: Add speed for first frame. Interpolate or add default
     for index in range(start + 1, stop, step):
-        row = data_frames[index]
+        row = data_frames.iloc[index]
         x = row[x_label]
         y = row[y_label]
         z = row[z_label]
@@ -47,5 +49,5 @@ def speed(data_frames : pd.DataFrame, start=0, end=None, step=1):
         
     return mean(speeds)
 
-if __name__ == "__main__":
-    loading_routines.load_df_from_xml("data/")
+def mean(x):
+    return sum(x)/ len(x)
