@@ -85,3 +85,9 @@ def get_sequences_with_little_movement(df, variables_to_check, max_mov = 0.05, m
             compare_frame_no += 1
             
     return little_movement_dfs
+
+
+def filter_noise(df, interval):
+    # int interval over which applying the mean
+    
+    return df.groupby(np.arange(len(df))//interval).mean()
