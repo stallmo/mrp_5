@@ -1,6 +1,7 @@
 from sklearn import preprocessing
 import pandas as pd
 import numpy as np
+from math import tan
 
 def remove_outliers(df, low_percentil = 0.01, high_percentil=0.99):
     filt_df = df.loc[:, df.columns[4:]] #ignore subject, time, frameId, tracking
@@ -41,5 +42,32 @@ def normalize_data(df, columns = None):
     return df_scaled
 
 def recalculate_joint_positions(df):
-    # Read x, y and z values per joint.U
-    pass
+    # TODO: Add column parameter that defines which joints are to be translated.
+    # Parameter should be the joint names such that the x and y are JOINT_x and JOINT_y respectively.
+    # The function adds a JOINT_real_x and JOINT_real_y to the Dataframe
+    """
+    Translates joint x and y coordinate axes to meters from pixels
+    :param df: DataFrame containing the joint information
+    :return:
+    """
+    # assumes 512 x 424 resolution for IR sensor
+    width = 512
+    height = 424
+    middle_x = width/2
+    middle_y = height/2
+
+    # assumes FOV: 70 x 60 degrees
+    alpha = 70
+    beta = 60
+
+    half_alpha = alpha/2
+    half_beta = beta/2
+    # calculates the ratio of the of a coordinate axis from the middle
+    get_x_ratio = lambda x: (x - middle_x) / middle_x
+    get_y_ratio = lambda y: (y - middle_y) / middle_y
+    # gets the dimensions of the view pane at some Z
+    get_x = lambda z: tan(half_alpha) * z
+    get_y = lambda z: tan(half_beta) * z
+    # get ratio of x and y with regards to the middle of the screen
+    df["head_real_x"] = df.apply(lambda row: get_x_ratio(row["head_x"]) * get_x(row['head_z']))
+    df["head_real_y"] = df.apply(lambda row: get_y_ratio(row["head_y"]) * get_y(row['head_z']))
