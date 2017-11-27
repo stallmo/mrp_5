@@ -37,5 +37,5 @@ def calculate_joint_differences(frames_df, only_for_columns = None):
             column_name='{0}-{1}'.format(z_name, z_name2)
             columns_dict[column_name] = frames_df[z_name]-frames_df[z_name2]
     
-    posture_feature_df = pd.DataFrame(columns_dict)
-    return posture_feature_df
+    differences_df = pd.DataFrame(columns_dict)
+    return differences_df
