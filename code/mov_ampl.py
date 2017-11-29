@@ -1,6 +1,7 @@
 import loading_routines
 import feature_engineering
 import preprocessing
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
@@ -12,7 +13,7 @@ def mov_amplitude(data, s_joint, m_joint):
     :param m_joint: moving joint to get the amplitude of
     :return: pandas ds with frequency,max,min,mean of amplitudes
     '''
-   data = preprocessing.remove_outliers(data)
+    data = preprocessing.remove_outliers(data)
     data = preprocessing.normalize_data(data)
     data = preprocessing.filter_noise(data,10)
     diff = abs(feature_engineering.calculate_joint_differences(data, only_for_columns=[ 'spineMid_x', 'spineMid_y', 'spineMid_z', 'handR_x', 'handR_y', 'handR_z']))
