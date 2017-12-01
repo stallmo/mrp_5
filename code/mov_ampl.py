@@ -53,7 +53,7 @@ def mov_amplitude(data, s_joint, m_joint):
             c_z +=1
 
     #return creation
-    ret = pd.DataFrame(columns=['ampl_freq_X', 'ampl_freq_Y', 'ampl_freq_Z','ampl_max_X','ampl_max_Y','ampl_max_Z','ampl_min_X','ampl_min_Y','ampl_min_Z','ampl_mean_X','ampl_mean_Y','ampl_mean_Z'])
+    ret = pd.DataFrame(columns=['ampl_freq_'+delta_x, 'ampl_freq_'+delta_y, 'ampl_freq_'+delta_z,'ampl_max_'+delta_x,'ampl_max_'+delta_y,'ampl_max_'+delta_z,'ampl_min_'+delta_x,'ampl_min_'+delta_y,'ampl_min_'+delta_z,'ampl_mean_'+delta_x,'ampl_mean_'+delta_y,'ampl_mean_'+delta_z])
     ret.loc[s_joint+'-'+m_joint] = [(float(c_x) / c),(float(c_y) / c),(float(c_z) / c),_max[delta_x],_max[delta_y],_max[delta_z],_min[delta_x], _min[delta_y], _min[delta_z],_mean[delta_x], _mean[delta_y], _mean[delta_z]]
 
 

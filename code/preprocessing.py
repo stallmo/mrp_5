@@ -29,7 +29,7 @@ def normalize_data(df, columns = None):
     if columns is None:
         #df_values = df.loc[:,df.columns[4:]].values #np.array
         scaled_values = scaler.fit_transform(df.loc[:,df.columns[4:]])
-        print(type(scaled_values))
+        #print(type(scaled_values))
         df_scaled = pd.DataFrame(scaled_values, columns = df.columns[4:])
         #print(df_scaled)
         df_scaled = pd.concat([df.loc[:, df.columns[:4]], df_scaled], axis=1)
