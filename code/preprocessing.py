@@ -41,13 +41,15 @@ def normalize_data(df, columns = None):
     
     return df_scaled
 
-def recalculate_joint_positions(df):
+def recalculate_joint_positions(df, joint_name):
     # TODO: Add column parameter that defines which joints are to be translated.
     # Parameter should be the joint names such that the x and y are JOINT_x and JOINT_y respectively.
     # The function adds a JOINT_real_x and JOINT_real_y to the Dataframe
     """
     Translates joint x and y coordinate axes to meters from pixels
     :param df: DataFrame containing the joint information
+    :param joint_name: Name of the joint that has to be translated. The dataframeshould contain columns "JOINT_NAME_x",
+    "JOINT_NAME_y" and "JOINT_NAME_z"
     :return:
     """
     # assumes 512 x 424 resolution for IR sensor
@@ -62,6 +64,10 @@ def recalculate_joint_positions(df):
 
     half_alpha = alpha/2
     half_beta = beta/2
+
+    x_label = joint_name + "_x"
+    y_label = joint_name + "_y"
+    z_label = joint_name + "_z"
     # calculates the ratio of the of a coordinate axis from the middle
     get_x_ratio = lambda x: (x - middle_x) / middle_x
     get_y_ratio = lambda y: (y - middle_y) / middle_y
@@ -69,5 +75,5 @@ def recalculate_joint_positions(df):
     get_x = lambda z: tan(half_alpha) * z
     get_y = lambda z: tan(half_beta) * z
     # get ratio of x and y with regards to the middle of the screen
-    df["head_real_x"] = df.apply(lambda row: get_x_ratio(row["head_x"]) * get_x(row['head_z']))
-    df["head_real_y"] = df.apply(lambda row: get_y_ratio(row["head_y"]) * get_y(row['head_z']))
+    df[joint_name + "_real_x"] = df.apply(lambda row: get_x_ratio(row["head_x"]) * get_x(row['head_z']))
+    df[joint_name + "_real_y"] = df.apply(lambda row: get_y_ratio(row["head_y"]) * get_y(row['head_z']))
