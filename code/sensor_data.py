@@ -108,7 +108,11 @@ def mean_time_open(data):
         if diff > max_diff:
             max_diff = diff
         time_diffs.append(diff)
-    return {'mean_time_sensor_' + data[0][0]: sum(time_diffs) / len(time_diffs),
+    if len(time_diffs)==0:
+        mean_sen = 0
+    else:
+        mean_sen = sum(time_diffs) / len(time_diffs)
+    return {'mean_time_sensor_' + data[0][0]: mean_sen,
             'max_time_sensor_' + data[0][0]: max_diff,
             'min_time_sensor_' + data[0][0]: min_diff,
             'total_time_sensor_' + data[0][0]: sum(time_diffs)}
@@ -141,12 +145,13 @@ def clean_line_data(data):
                 cleaned_data.append(data_per_sensor[-1])
             temp = element[0]
             data_per_sensor = [element]
+    print(cleaned_data)
     return cleaned_data
 
 
 def extract_features(file, file_name):
     extracted_features = {}
-    data = extract_lines_data(file)
+    data = extract_lines_data(file, file_name)
     data = clean_line_data(data)
     for sensor in ['a50', 'a51', 'a56']:
         sensor_specific_data = extract_sensor(sensor, data)
