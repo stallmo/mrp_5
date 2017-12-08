@@ -1,7 +1,5 @@
+from __future__ import division
 import pandas as pd
-import os
-import re
-from datetime import datetime
 
 DOOR_SENSOR_ID = 'a53'
 DRAWER_SENSOR_IDS = ['a50', 'a51', 'a56']

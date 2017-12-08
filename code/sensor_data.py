@@ -78,11 +78,11 @@ def clean_rows(rows):
             current_sensor = row[1]
     return cleaned_rows
 
-  
+
 def main():
     path = '../data/behavior_AND_personality_dataset/binary/'
     df = sensor_data_to_data_frame(path)
-    # print(df)
+    # print df
     print(extract_features(df))
 
 
