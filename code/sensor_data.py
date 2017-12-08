@@ -2,12 +2,11 @@ import pandas as pd
 import os
 import re
 from datetime import datetime
+from sensor_features import extract_features
 
 
 #####################################################
-#####################################################
-# Get sensor data from text files into data frame
-#####################################################
+# Put sensor data from text files into data frame
 #####################################################
 def sensor_data_to_data_frame(path_to_dir):
     """
@@ -36,9 +35,9 @@ def get_column_names():
 def extract_lines_data(file, file_name):
     lines = []
     for line in file.readlines():
-        if 'BUTTON' in line:
+        split_line = line.split()
+        if 'BUTTON' in line and len(split_line) > 2:
             subject_number = int(re.findall('subject?(\d+)', file_name)[0])
-            split_line = line.split()
             sensor_id = re.findall('a5\d', split_line[0])[0]
             status = re.findall('BUTTON?([A-Z]+)', split_line[0])[0]
             date = split_line[1].split('-')
@@ -60,6 +59,12 @@ def get_sorted_file_names(path_to_dir):
 
 
 def clean_rows(rows):
+    """
+    Only leaves rows with two subsequent entries for each sensor
+    Every sensor activation should consist of exactly one OFF and one ON row
+    :param rows: rows with more (or less) than 2 entries per sensor activation
+    :return: cleaned rows
+    """
     cleaned_rows = []
     current_sensor = rows[0][1]
     temp_row_memory = []
@@ -69,106 +74,16 @@ def clean_rows(rows):
         else:
             if len(temp_row_memory) > 1:
                 cleaned_rows += temp_row_memory[-2:]
-            temp_row_memory = []
+            temp_row_memory = [row]
             current_sensor = row[1]
     return cleaned_rows
-
-
-#####################################################
-#####################################################
-# Extract features from data frame
-#####################################################
-#####################################################
-def extract_door_opening(data):
-    door_sensor_activations = []
-    temp = []
-    for element in data:
-        # Sensor Id 'a53' is the door
-        if element[0] == 'a53':
-            temp.append(element[3])
-        elif len(temp) > 1:
-            door_sensor_activations.append(temp[-2])
-            door_sensor_activations.append(temp[-1])
-            temp = []
-    while len(door_sensor_activations) != len(door_column_names()):
-        door_sensor_activations.append(None)
-    return door_sensor_activations
-
-
-def mean_time_open(data):
-    time_diffs = []
-    max_diff = 0
-    min_diff = 0
-    for i in range(len(data) - 1):
-        diff = (data[i + 1][3] - data[i][3]).seconds
-        if i == 0:
-            min_diff = diff
-        elif diff < min_diff:
-            min_diff = diff
-        if diff > max_diff:
-            max_diff = diff
-        time_diffs.append(diff)
-    return {'mean_time_sensor_' + data[0][0]: sum(time_diffs) / len(time_diffs),
-            'max_time_sensor_' + data[0][0]: max_diff,
-            'min_time_sensor_' + data[0][0]: min_diff,
-            'total_time_sensor_' + data[0][0]: sum(time_diffs)}
-
-
-def extract_sensor(sensor, data):
-    rlist = []
-    for element in data:
-        if element[0] == sensor:
-            rlist.append(element)
-    return rlist
-
-
-def clean_line_data(data):
-    """
-    Cleans the data so that for each sensor there are actually two entries for each activation
-    :param data:
-    :return: a cleaned data list
-    """
-    cleaned_data = []
-    temp = data[0][0]
-    data_per_sensor = []
-    for element in data:
-        sensor = element[0]
-        if sensor == temp:
-            data_per_sensor.append(element)
-        else:
-            if len(data_per_sensor) > 1:
-                cleaned_data.append(data_per_sensor[-2])
-                cleaned_data.append(data_per_sensor[-1])
-            temp = element[0]
-            data_per_sensor = [element]
-    return cleaned_data
-
-
-def extract_features(file, file_name):
-    extracted_features = {}
-    data = extract_lines_data(file)
-    data = clean_line_data(data)
-    for sensor in ['a50', 'a51', 'a56']:
-        sensor_specific_data = extract_sensor(sensor, data)
-        # Order of feature extraction method calls important!
-        extracted_features = extracted_features + mean_time_open(sensor_specific_data)
-    # return subject number with extracted features:
-    return re.findall('subject?(\d+)', file_name) + extracted_features
-
-
-def door_column_names():
-    column_names = []
-    for i in range(1, 7):
-        column_names.append("door_open_" + str(i))
-        column_names.append("door_close_" + str(i))
-    return column_names
 
 
 def main():
     path = '../data/behavior_AND_personality_dataset/binary/'
     df = sensor_data_to_data_frame(path)
-    print(df)
-    print(df[df['subject_number'] == 3])
+    # print(df)
+    print(extract_features(df))
 
 
 if __name__ == '__main__':
