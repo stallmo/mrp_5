@@ -91,3 +91,44 @@ def filter_noise(df, interval):
     # int interval over which applying the mean
     
     return df.groupby(np.arange(len(df))//interval).mean()
+
+def ewma_noise_filter(df):
+    return pd.ewma(df, span=30)
+
+
+def recalculate_joint_positions(df, joint_name):
+    # Parameter should be the joint names such that the x and y are JOINT_x and JOINT_y respectively.
+    # The function adds a JOINT_real_x and JOINT_real_y to the Dataframe
+    """
+    Translates joint x and y coordinate axes to meters from pixels
+    :param df: DataFrame containing the joint information
+    :param joint_name: Name of the joint that has to be translated. The dataframeshould contain columns "JOINT_NAME_x",
+    "JOINT_NAME_y" and "JOINT_NAME_z"
+    :return:
+    """
+    # assumes 512 x 424 resolution for IR sensor
+    width = 512
+    height = 424
+    middle_x = width/2
+    middle_y = height/2
+
+    # assumes FOV: 70 x 60 degrees
+    alpha = 70
+    beta = 60
+
+    half_alpha = alpha/2
+    half_beta = beta/2
+
+    x_label = joint_name + "_x"
+    y_label = joint_name + "_y"
+    z_label = joint_name + "_z"
+    # calculates the ratio of the of a coordinate axis from the middle
+    get_x_ratio = lambda x: (x - middle_x) / middle_x
+    get_y_ratio = lambda y: (y - middle_y) / middle_y
+    # gets the dimensions of the view pane at some Z
+    get_x = lambda z: np.tan(half_alpha) * z
+    get_y = lambda z: np.tan(half_beta) * z
+
+    # get ratio of x and y with regards to the middle of the screen
+    df[joint_name + "_real_x"] = df.apply(lambda row: get_x_ratio(row[x_label]) * get_x(row[z_label]))
+    df[joint_name + "_real_y"] = df.apply(lambda row: get_y_ratio(row[y_label]) * get_y(row[z_label]))
