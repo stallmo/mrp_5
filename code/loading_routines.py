@@ -62,3 +62,59 @@ def load_df_from_xml(path_to_xml, n_joints=21):
 
     joints_df = pd.DataFrame(rows, columns=columns)
     return joints_df
+
+
+def extract_tasks(filepath):
+    '''
+    :param filepath: path to txt file to read
+    :return: a list with door entrance data (when subject entered the room to begin a task)
+    '''
+
+
+    f = open(filepath,'r')
+
+    entrance = []
+
+    #for every line in the file
+    for i in f:
+        tstamp = ''
+    #if line is too short trash it
+        if len(i) < 50:
+            continue
+    #get sensor id and status
+        sensor = i[:3]
+        if i[9:11] == 'ON':
+            status = 'on'
+        else:
+            status = 'off'
+
+    #after the long line of sensor name get timestamp
+        for j in i[70:]:
+            if j.isdigit():
+                tstamp += (j)
+    #if timestamp too short trash it
+        if len(tstamp) < 12:
+            continue
+
+    #if some writing error occured in file clean it
+        while tstamp[:2] in ('53','56','50','51'):
+            tstamp = tstamp[2:]
+
+    #take only hour,minute,second from timestamp
+        tstamp = tstamp[6:]
+
+    #convert string into actual timestamp
+        ttstamp = tm.strptime(tstamp[:2]+' '+tstamp[2:4]+' '+tstamp[4:6],'%H %M %S')
+
+    #only consider door sensor on
+    #TODO: can add other sensors here
+    #NOTE: Other sensors are active when off (not linked)
+
+        if sensor == 'a53' and status == 'on':
+            entrance.append(ttstamp)
+
+
+    #only consider when subject enters the room, not when exits (odd times, so even in the list)
+    entrance = entrance[0::2]
+
+    return entrance
