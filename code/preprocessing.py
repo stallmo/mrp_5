@@ -30,11 +30,13 @@ def normalize_data(df, columns = None):
     scaler = preprocessing.MinMaxScaler() #performs scaling inplace when copy=false
     if columns is None:
         #df_values = df.loc[:,df.columns[4:]].values #np.array
-        scaled_values = scaler.fit_transform(df.loc[:,df.columns[4:]])
+        #last column is tasks: do not scale
+        column_number_task = len(df.columns)-1
+        scaled_values = scaler.fit_transform(df.loc[:,df.columns[4:column_number_task]])
         #print(type(scaled_values))
-        df_scaled = pd.DataFrame(scaled_values, columns = df.columns[4:])
+        df_scaled = pd.DataFrame(scaled_values, columns = df.columns[4:column_number_task])
         #print(df_scaled)
-        df_scaled = pd.concat([df.loc[:, df.columns[:4]], df_scaled], axis=1)
+        df_scaled = pd.concat([df.loc[:, df.columns[:4]], df_scaled, df.loc[:, df.columns[column_number_task]]], axis=1)
     else:
         #to do: check if input columns are correct
         scaled_values = scaler.fit_transform(df.loc[:,columns])
