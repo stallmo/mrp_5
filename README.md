@@ -16,6 +16,10 @@ The requirements.txt should contain all packages that are needed to run the code
   * all jupyter notebooks go here
 * data
   * the data goes in here, but should not be committed! Every developper has the data locally stored.
+  * there are two folders:
+    1. behavior_AND_personality_dataset (initial dataset)
+    2. data_recordings_master (dataset we recorded)
+  * note: due to a duplicate subject20, files containing subject20 in their filename in data_recordings_master/ must be changed to subject50 
 
 ### Basic proceeding for adding code
 (eventually create issue)

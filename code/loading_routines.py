@@ -5,6 +5,9 @@ sys.path.insert(0, '../code/code_behaviorANDpersonality_masterProject/') #eventu
 
 # from data_extractor import *
 import pandas as pd
+import time as tm
+import datetime
+import glob
 
 def load_df_from_xml(path_to_xml, n_joints=21):
     """
@@ -20,7 +23,36 @@ def load_df_from_xml(path_to_xml, n_joints=21):
     pos1 = path_to_xml.find('/subject')+1
     pos2 = path_to_xml.find('_points')
     subject = path_to_xml[pos1:pos2]
-    columns = ['subject',
+    columns = get_all_columns()
+    #n_joints = 21
+    first_joint_no = 1 # element no in parsed list
+    rows = []
+    for df_ind, frame in enumerate(parsed_xml):
+        #add subject
+        row = [subject]
+        #add trackinfo
+        for i in range(3):
+            row.append(frame[0][i])
+        #add joints
+        for joint in range(first_joint_no,n_joints+first_joint_no):
+            for coord in range(3):
+                row.append(float(frame[joint][coord]))
+        #print(len(row))
+        if df_ind % 1000==0:
+            print('Loaded {0} tracks for "{1}"'.format(df_ind, subject))
+        rows.append(row)
+
+    joints_df = pd.DataFrame(rows, columns=columns)
+    
+    #add column for task each frame belongs to        
+    task_timestamps = __get_task_timestamps(subject)
+    tasks = joints_df.apply(lambda row: __get_task(row, task_timestamps), axis=1)
+    joints_df['task'] = tasks
+    
+    return joints_df
+
+def get_all_columns():
+    return ['subject',
                 'frameId', 'time', 'trackingId',
                'head_x', 'head_y', 'head_z',
               'neck_x', 'neck_y', 'neck_z',
@@ -43,27 +75,48 @@ def load_df_from_xml(path_to_xml, n_joints=21):
               'kneeL_x', 'kneeL_y', 'kneeL_z',
               'ankleL_x', 'ankleL_y', 'ankleL_z',
               'footL_x', 'footL_y', 'footL_z']
-    #n_joints = 21
-    first_joint_no = 1 # element no in parsed list
-    rows = []
-    for df_ind, frame in enumerate(parsed_xml):
-        #add subject
-        row = [subject]
-        #add trackinfo
-        for i in range(3):
-            row.append(frame[0][i])
-        #add joints
-        for joint in range(first_joint_no,n_joints+first_joint_no):
-            for coord in range(3):
-                row.append(float(frame[joint][coord]))
-        #print(len(row))
-        if df_ind % 1000==0:
-            print('Loaded {0} tracks for "{1}"'.format(df_ind, subject))
-        rows.append(row)
 
-    joints_df = pd.DataFrame(rows, columns=columns)
-    return joints_df
+def __get_task_timestamps(subject):
+    all_files_1 = glob.glob('../data/behavior_AND_personality_dataset/binary/*.txt')
+    all_files_2 = glob.glob('../data/data_recordings_master/binary/*.txt')
+    for f in all_files_1+all_files_2:
+        if subject in f:
+            return extract_tasks(f)
 
+def __get_task(row, task_timestamps):
+    row_time = datetime.datetime.strptime(str(row['time'].replace('\n', '')), "%a %b %d %H:%M:%S %Y").strftime('%H:%M:%S')
+    #hour = dt.hour
+    #minute = dt.minute
+    #sec = dt.second
+    #print hour, minute, sec
+    
+    for task_no, start_task in enumerate(task_timestamps):
+        task_start_hour = start_task[3]
+        task_start_minute = start_task[4]
+        task_start_sec = start_task[5]
+        
+        start_task_time = datetime.datetime.strptime(str(task_start_hour)+':'+str(task_start_minute)+':'+str(task_start_sec), '%H:%M:%S').strftime('%H:%M:%S')
+
+        #print 'row time: ', hour, minute, sec
+        #print 'task_time: ', task_start_hour, task_start_minute, task_start_sec
+        
+        #if recording after start of current task
+        if row_time>=start_task_time:
+            #find first task which starts after recording of row
+            for next_task_no, next_task_start in enumerate(task_timestamps[task_no:]):
+                next_task_start_hour = next_task_start[3]
+                next_task_start_minute = next_task_start[4]
+                next_task_start_sec = next_task_start[5]
+                
+                next_task_time = datetime.datetime.strptime(str(next_task_start_hour)+':'+str(next_task_start_minute)+':'+str(next_task_start_sec), '%H:%M:%S').strftime('%H:%M:%S')
+
+                if next_task_time>row_time:
+                    return next_task_no-1
+                
+                if next_task_no==5:
+                    return next_task_no
+                
+        return -10
 
 def extract_tasks(filepath):
     '''
@@ -117,5 +170,6 @@ def extract_tasks(filepath):
 
     #only consider when subject enters the room, not when exits (odd times, so even in the list)
     entrance = entrance[0::2]
+    f.close()
 
     return entrance
