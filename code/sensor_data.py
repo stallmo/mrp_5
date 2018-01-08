@@ -3,6 +3,7 @@ import os
 import re
 from datetime import datetime
 from sensor_features import extract_features
+from loading_routines import extract_tasks
 
 
 #####################################################
@@ -20,8 +21,8 @@ def sensor_data_to_data_frame(path_to_dir):
     file_names = get_sorted_file_names(path_to_dir)
     # For each file/subject extract the features
     for file_name in file_names:
-        file = open(path_to_dir + file_name, 'r')
-        rows += extract_lines_data(file, file_name)
+        f = open(path_to_dir + file_name, 'r')
+        rows += extract_lines_data(f, file_name)
     cleaned_rows = clean_rows(rows)
     # Put columns and rows into a data frame:
     df = pd.DataFrame(cleaned_rows, columns=get_column_names())
@@ -32,9 +33,9 @@ def get_column_names():
     return ['subject_number', 'sensor_id', 'status', 'datetime']
 
 
-def extract_lines_data(file, file_name):
+def extract_lines_data(txt_file, file_name):
     lines = []
-    for line in file.readlines():
+    for line in txt_file.readlines():
         split_line = line.split()
         if 'BUTTON' in line and len(split_line) > 2:
             subject_number = int(re.findall('subject?(\d+)', file_name)[0])
@@ -50,9 +51,9 @@ def extract_lines_data(file, file_name):
 
 def get_sorted_file_names(path_to_dir):
     file_names = []
-    for file in os.listdir(path_to_dir):
-        if file.endswith(".txt"):
-            file_names.append(file)
+    for file_name in os.listdir(path_to_dir):
+        if file_name.endswith(".txt"):
+            file_names.append(file_name)
     # put file names in correct order:
     file_names.sort(key=lambda x: int(re.findall('subject?(\d+)|$', x)[0]))
     return file_names
@@ -67,8 +68,28 @@ def clean_rows(rows):
     """
     cleaned_rows = []
     current_sensor = rows[0][1]
+    current_subject = rows[0][0]
     temp_row_memory = []
+    count_sensor_activations = {'a50': 0, 'a51': 0, 'a56': 0, 'a53': 0}
+    data_all_subjects = []
+    data = BinarySensorData()
+    data.subject = current_subject
     for row in rows:
+        if row[0] != current_subject:
+            current_subject = row[0]
+            data_all_subjects.append(data)
+            data = BinarySensorData()
+            data.subject = current_subject
+
+        if row[1] == 'a50':
+            data.a50.append(row)
+        elif row[1] == 'a51':
+            data.a51.append(row)
+        elif row[1] == 'a53':
+            data.a53.append(row)
+        elif row[1] == 'a56':
+            data.a56.append(row)
+
         if row[1] == current_sensor:
             temp_row_memory.append(row)
         else:
@@ -81,9 +102,19 @@ def clean_rows(rows):
 
 def main():
     path = '../data/behavior_AND_personality_dataset/binary/'
+    extract_tasks(path + '18-10-16_sensors_subject37.txt')
     df = sensor_data_to_data_frame(path)
     # print df
-    print(extract_features(df))
+    # print(extract_features(df))
+
+
+class BinarySensorData:
+    def __init__(self):
+        self.subject = None
+        self.a50 = []
+        self.a51 = []
+        self.a53 = []
+        self.a56 = []
 
 
 if __name__ == '__main__':

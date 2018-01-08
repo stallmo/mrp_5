@@ -62,3 +62,6 @@ def features_for_single_subject(df):
             dict_return[sensor + '_activations_over_total'] = \
                 dict_return['number_of_activations_' + sensor] / total_activations_all_sensors
     return dict_return
+
+
+

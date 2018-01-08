@@ -1,8 +1,9 @@
 #import Dario's code (folder 'code_behaviorANDpersonality_masterProject/' needs to be in the code folder)
 import sys
+import time
 sys.path.insert(0, '../code/code_behaviorANDpersonality_masterProject/') #eventually needs to adjusted
 
-from data_extractor import *
+# from data_extractor import *
 import pandas as pd
 
 def load_df_from_xml(path_to_xml, n_joints=21):
@@ -104,7 +105,7 @@ def extract_tasks(filepath):
         tstamp = tstamp[6:]
 
     #convert string into actual timestamp
-        ttstamp = tm.strptime(tstamp[:2]+' '+tstamp[2:4]+' '+tstamp[4:6],'%H %M %S')
+        ttstamp = time.strptime(tstamp[:2]+' '+tstamp[2:4]+' '+tstamp[4:6],'%H %M %S')
 
     #only consider door sensor on
     #TODO: can add other sensors here
