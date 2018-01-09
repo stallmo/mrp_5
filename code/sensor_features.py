@@ -26,7 +26,9 @@ def get_features(df):
         i += 1
         if df[df['subject_number'] == i].size == 0:
             break
-    return pd.DataFrame(some)
+    df_return = pd.DataFrame(some)
+    df_return = df_return.fillna(0)
+    return df_return
 
 
 def features_for_single_subject(df):

@@ -61,16 +61,14 @@ def get_sorted_file_names(path_to_dir):
 
 def clean_rows(rows):
     """
-    Only leaves rows with two subsequent entries for each sensor
-    Every sensor activation should consist of exactly one OFF and one ON row
-    :param rows: rows with more (or less) than 2 entries per sensor activation
+    Cleans the rows
+    :param rows: rows
     :return: cleaned rows
     """
     cleaned_rows = []
     current_sensor = rows[0][1]
     current_subject = rows[0][0]
     temp_row_memory = []
-    count_sensor_activations = {'a50': 0, 'a51': 0, 'a56': 0, 'a53': 0}
     data_all_subjects = []
     data = BinarySensorData()
     data.subject = current_subject
@@ -85,8 +83,6 @@ def clean_rows(rows):
             data.a50.append(row)
         elif row[1] == 'a51':
             data.a51.append(row)
-        elif row[1] == 'a53':
-            data.a53.append(row)
         elif row[1] == 'a56':
             data.a56.append(row)
 
@@ -97,7 +93,79 @@ def clean_rows(rows):
                 cleaned_rows += temp_row_memory[-2:]
             temp_row_memory = [row]
             current_sensor = row[1]
-    return cleaned_rows
+
+    for data in data_all_subjects:
+        if len(data.a50) % 2 != 0:
+            prev_status = ''
+            current_status = ''
+            indices_to_remove = []
+            for i, v in enumerate(data.a50):
+                if current_status == '':
+                    current_status = v[2]
+                else:
+                    prev_status = current_status
+                    current_status = v[2]
+                if current_status == prev_status:
+                    indices_to_remove.append(i)
+                elif i == 0 and v[2] == 'ON':
+                    indices_to_remove.append(i)
+                elif i == len(data.a50) - 1 and v[2] == 'OFF':
+                    indices_to_remove.append(i)
+            if len(indices_to_remove) != 0:
+                indices_to_remove.reverse()
+            for i in indices_to_remove:
+                del data.a50[i]
+        if len(data.a51) % 2 != 0:
+            prev_status = ''
+            current_status = ''
+            indices_to_remove = []
+            for i, v in enumerate(data.a51):
+                if current_status == '':
+                    current_status = v[2]
+                else:
+                    prev_status = current_status
+                    current_status = v[2]
+                if current_status == prev_status:
+                    indices_to_remove.append(i)
+                elif i == 0 and v[2] == 'ON':
+                    indices_to_remove.append(i)
+                elif i == len(data.a51) - 1 and v[2] == 'OFF':
+                    indices_to_remove.append(i)
+            if len(indices_to_remove) != 0:
+                indices_to_remove.reverse()
+            for i in indices_to_remove:
+                del data.a51[i]
+        if len(data.a56) % 2 != 0:
+            prev_status = ''
+            current_status = ''
+            indices_to_remove = []
+            for i, v in enumerate(data.a56):
+                if current_status == '':
+                    current_status = v[2]
+                else:
+                    prev_status = current_status
+                    current_status = v[2]
+                if current_status == prev_status:
+                    indices_to_remove.append(i)
+                elif i == 0 and v[2] == 'ON':
+                    indices_to_remove.append(i)
+                elif i == len(data.a56) - 1 and v[2] == 'OFF':
+                    indices_to_remove.append(i)
+            if len(indices_to_remove) != 0:
+                indices_to_remove.reverse()
+            for i in indices_to_remove:
+                del data.a56[i]
+
+    crs = []
+    for data in data_all_subjects:
+        for i in data.a50:
+            crs.append(i)
+        for i in data.a51:
+            crs.append(i)
+        for i in data.a56:
+            crs.append(i)
+
+    return crs
 
 
 def main():
@@ -105,7 +173,7 @@ def main():
     extract_tasks(path + '18-10-16_sensors_subject37.txt')
     df = sensor_data_to_data_frame(path)
     # print df
-    # print(extract_features(df))
+    # print extract_features(df)
 
 
 class BinarySensorData:
@@ -113,7 +181,6 @@ class BinarySensorData:
         self.subject = None
         self.a50 = []
         self.a51 = []
-        self.a53 = []
         self.a56 = []
 
 
