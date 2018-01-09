@@ -62,7 +62,7 @@ def extract_tasks(filepath):
 
     return entrance
 
-def split_tasks(data, subject):
+def split_tasks(data, subject, path_to_sensor):
 
     '''
     :param data: pandas df for a subject
@@ -70,7 +70,9 @@ def split_tasks(data, subject):
     :return: 6tuple of dataframes with data per task
     '''
 
-    tasks = extract_tasks('binary/18-10-16_sensors_subject'+subject+'.txt')
+    #tasks = extract_tasks('../data/data_recordings_master/binary/18-10-16_sensors_'+subject+'.txt')
+    tasks = extract_tasks(path_to_sensor)
+    
 
     columns = ['subject',
                'frameId', 'time', 'trackingId',
@@ -102,6 +104,7 @@ def split_tasks(data, subject):
     task3 = []
     task4 = []
     task5 = []
+    all_tasks = []
 
     for i,r in data.iterrows():
 
@@ -133,3 +136,67 @@ def split_tasks(data, subject):
     t5 = pd.DataFrame(task5, columns=columns)
 
     return t0,t1,t2,t3,t4,t5
+
+def get_task_column(data, path_to_sensor):
+    
+    tasks = extract_tasks(path_to_sensor)
+    
+    task_column = []
+    
+    for i,r in data.iterrows():
+
+        dtime = tm.strptime(r['time'][11:19],'%H:%M:%S' )
+
+        if dtime > tasks[5]:
+            task_column.append(5)
+
+        if (dtime < tasks[5]) and (dtime > tasks[4]):
+            task_column.append(4)
+
+        if (dtime < tasks[4]) and (dtime > tasks[3]):
+            task_column.append(3)
+
+        if (dtime < tasks[3]) and (dtime > tasks[2]):
+            task_column.append(2)
+
+        if (dtime < tasks[2]) and (dtime > tasks[1]):
+            task_column.append(1)
+
+        if (dtime < tasks[1]) and (dtime > tasks[0]):
+            task_column.append(0)
+    
+    return task_column
+    
+#%%
+    """
+import glob
+all_subjects = ['subject'+str(i) for i in range(21,48)]
+all_subjects = all_subjects+['subject50']
+subject_frames_files = glob.glob('../data/data_recordings_master/joints/*.xml')
+all_subjects_dfs = [loading_routines.load_df_from_xml(f) for f in subject_frames_files]
+#%%
+failed = []
+for subject_df in all_subjects_dfs:
+    subject = subject_df['subject'][0]
+    print subject
+    tasks = split_tasks(subject_df, subject)
+    task_sum = 0
+    for i, task in enumerate(tasks):
+        if len(task)==0:
+          failed.append(subject)
+        task_sum += len(task)
+        print 'task: ',i,' length of task dfs: ', len(task)
+    print 'total frames in original dataframe: ', len(subject_df), 'total frames by task: ', task_sum
+    if len(subject_df)!=task_sum:
+        print 'Total frames per subject and total task frames do not match!'
+#%%
+failed = []
+for subject_df in all_subjects_dfs:
+    subject = subject_df['subject'][0]
+    path = '../data/data_recordings_master/binary/18-10-16_sensors_'+subject+'.txt'
+    col = get_task_column(subject_df, path)
+    print subject
+    print 'len task column: ', len(col), ' len dataframe: ', len(subject_df)
+    if len(col)!=len(subject_df):
+        print 'Alarm!'
+        failed.append(subject)"""
