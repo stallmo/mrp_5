@@ -3,7 +3,7 @@ import sys
 import time
 sys.path.insert(0, '../code/code_behaviorANDpersonality_masterProject/') #eventually needs to adjusted
 
-# from data_extractor import *
+from data_extractor import *
 import pandas as pd
 import time as tm
 import datetime

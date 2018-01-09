@@ -5,14 +5,15 @@ from math import tan
 from pandas.stats.moments import ewma
 
 def remove_outliers(df, low_percentil = 0.01, high_percentil=0.99):
-    filt_df = df.loc[:, df.columns[4:]] #ignore subject, time, frameId, tracking
+    column_number_task = len(df.columns)-1
+    filt_df = df.loc[:, df.columns[4:column_number_task]] #ignore subject, time, frameId, tracking, task
     quantiles = filt_df.quantile([low_percentil, high_percentil]) #dataframe holding quantiles for each column
     #print(quantiles.head())
     
     filt_df = filt_df.apply(lambda col: col[(col>quantiles.loc[low_percentil, col.name]) &
                                   (col<quantiles.loc[high_percentil, col.name])], axis=0) #subset based on quantiles (= returns nan for values that are not in given range)
 
-    filt_df = pd.concat([df.loc[:,df.columns[:4]], filt_df], axis=1) #join subject, frameId, time trackingId back to the df
+    filt_df = pd.concat([df.loc[:,df.columns[:4]], filt_df, df.loc[:, df.columns[column_number_task]]], axis=1) #join subject, frameId, time, trackingId, task back to the df
     filt_df.dropna(inplace=True) #remove nan values
     filt_df.reset_index(inplace=True) #tidy messy index
     filt_df.drop('index', axis=1, inplace=True) #drop index row implicitly introduced in previous line
@@ -69,7 +70,7 @@ def get_sequences_with_little_movement(df, variables_to_check, max_mov = 0.05, m
         
         while not_moving:
             if compare_frame_no>=len(df)-1:
-                print('Setting out of bounds')
+                #print('Setting out of bounds')
                 out_of_bounds = True
                 break
                 
