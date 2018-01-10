@@ -2,8 +2,6 @@ import pandas as pd
 import os
 import re
 from datetime import datetime
-from sensor_features import extract_features
-from loading_routines import extract_tasks
 
 
 #####################################################
@@ -170,7 +168,7 @@ def clean_rows(rows):
 
 def main():
     path = '../data/behavior_AND_personality_dataset/binary/'
-    extract_tasks(path + '18-10-16_sensors_subject37.txt')
+    # todo: fix error in data: subject 9, line 53, sensor a50, status ON, 17-02-55 => 17-04-55
     df = sensor_data_to_data_frame(path)
     # print df
     # print extract_features(df)
