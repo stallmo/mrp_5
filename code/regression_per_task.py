@@ -7,6 +7,8 @@ from sklearn.gaussian_process.kernels import RBF, RationalQuadratic,ConstantKern
 from sklearn.svm import SVR
 from sklearn.linear_model import BayesianRidge
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
 
 
 def main(path_to_pickle, print_predictions=True):
@@ -40,6 +42,10 @@ def main(path_to_pickle, print_predictions=True):
             #2 good estim
             #model = RandomForestRegressor(n_estimators=1000, criterion='mse', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features='auto', max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0, warm_start=False)
             #5 good estim
+            #model = KNeighborsRegressor(n_neighbors=5, weights='uniform', algorithm='auto', leaf_size=30, p=2, metric='minkowski', metric_params=None, n_jobs=1)
+            #7 good estim
+            #model = MLPRegressor(hidden_layer_sizes=(100, ), activation='tanh', solver='sgd', alpha=0.0001, batch_size='auto', learning_rate='adaptive', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+            #3 good estim
 
             model.fit(X_train, y_train)
             score = model.score(X_test, y_test)
