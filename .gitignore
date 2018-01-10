@@ -2,5 +2,6 @@
 data/*
 code/code_behaviorANDpersonality_masterProject/*
 code/*pyc
+code/__pycache__/*
 notebooks/.ipynb_checkpoints
 .idea/*
