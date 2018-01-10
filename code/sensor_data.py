@@ -1,7 +1,12 @@
 import pandas as pd
 import os
 import re
-from datetime import datetime
+from datetime import datetime, time
+import os.path
+import time as tm
+import split_tasks
+import glob
+import sensor_features
 
 
 #####################################################
@@ -14,6 +19,8 @@ def sensor_data_to_data_frame(path_to_dir):
     :param path_to_dir:
     :return:
     """
+    # Correct subject 9 txt file:
+    correct_subject9_file(path_to_dir)
     rows = []
     # Get sorted file names:
     file_names = get_sorted_file_names(path_to_dir)
@@ -63,10 +70,7 @@ def clean_rows(rows):
     :param rows: rows
     :return: cleaned rows
     """
-    cleaned_rows = []
-    current_sensor = rows[0][1]
     current_subject = rows[0][0]
-    temp_row_memory = []
     data_all_subjects = []
     data = BinarySensorData()
     data.subject = current_subject
@@ -84,13 +88,8 @@ def clean_rows(rows):
         elif row[1] == 'a56':
             data.a56.append(row)
 
-        if row[1] == current_sensor:
-            temp_row_memory.append(row)
-        else:
-            if len(temp_row_memory) > 1:
-                cleaned_rows += temp_row_memory[-2:]
-            temp_row_memory = [row]
-            current_sensor = row[1]
+        if row == rows[len(rows) - 1]:
+            data_all_subjects.append(data)
 
     for data in data_all_subjects:
         if len(data.a50) % 2 != 0:
@@ -166,12 +165,81 @@ def clean_rows(rows):
     return crs
 
 
+def correct_subject9_file(path_to_dir):
+    # fix error in data: subject 9, line 53, sensor a50, status ON, 17-02-55 => 17-04-55
+    if os.path.isfile(path_to_dir + '18-10-16_sensors_subject9.txt'):
+        s = open(path_to_dir + '18-10-16_sensors_subject9.txt').read()
+        s = s.replace('17-02-55', '17-04-55')
+        f = open(path_to_dir + '18-10-16_sensors_subject9.txt', 'w')
+        f.write(s)
+        f.close()
+
+
+def sensor_data_per_task(path, task_number=1):
+    """
+    binary sensor dataframe for all subject for specific task
+    :param path: directory where txt files with binary sensor data are
+    :param task_number: can be either 1, 2, 3, 4, 5 or 6
+    :return:
+    """
+    df = sensor_data_to_data_frame(path)
+    df_per_subject = []
+    current_subject = df['subject_number'][0]
+    lst = []
+    for index, row in df.iterrows():
+        if current_subject == row['subject_number']:
+            lst.append(row)
+        else:
+            df_per_subject.append(lst)
+            lst = []
+            current_subject = row['subject_number']
+            lst.append(row)
+        if index == df.count()['subject_number'] - 1:
+            df_per_subject.append(lst)
+
+    paths_to_txt_files = glob.glob(path + '*.txt')
+    task_times = {}
+    for path in paths_to_txt_files:
+        task_times[int(re.findall('subject?(\d+)', path)[0])] = split_tasks.extract_tasks(path)
+
+    if len(df_per_subject) != len(task_times):
+        return "Task start times and number of subject not equal!"
+
+    timings = []
+    for key, value in task_times.iteritems():
+        timings.append(value)
+
+    rows_in_time_frame_task = []
+    for i in range(len(timings)):
+        for row in df_per_subject[i]:
+            x = datetime.time(row['datetime'])
+            y = time(timings[i][0][3], timings[i][0][4], timings[i][0][5])
+            if task_number == 6:
+                if time(timings[i][5][3], timings[i][5][4], timings[i][5][5]) > datetime.time(row['datetime']):
+                    rows_in_time_frame_task.append(row)
+            else:
+                if time(timings[i][task_number-1][3], timings[i][task_number-1][4], timings[i][task_number-1][5]) \
+                        < datetime.time(row['datetime']) < \
+                        time(timings[i][task_number][3], timings[i][task_number][4], timings[i][task_number][5]):
+                    rows_in_time_frame_task.append(row)
+
+    df_result = pd.DataFrame(rows_in_time_frame_task)
+    return df_result.reset_index()
+
+
 def main():
     path = '../data/behavior_AND_personality_dataset/binary/'
-    # todo: fix error in data: subject 9, line 53, sensor a50, status ON, 17-02-55 => 17-04-55
-    df = sensor_data_to_data_frame(path)
+    path2 = '../data/data_recordings_master/binary/'
+    # df = sensor_data_to_data_frame(path)
+    # df2 = sensor_data_to_data_frame('../data/data_recordings_master/binary/')
     # print df
-    # print extract_features(df)
+    # print df2
+    # print sensor_features.extract_features(df)
+    # print sensor_features.extract_features(df2)
+    # df = sensor_data_per_task(path, 6)
+    # print sensor_features.extract_features(df)
+    # df2 = sensor_data_per_task(path2, 4)
+    # print sensor_features.extract_features(df2)
 
 
 class BinarySensorData:

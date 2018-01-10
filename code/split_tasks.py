@@ -1,10 +1,7 @@
-import loading_routines
-import feature_engineering
+# import loading_routines
+# import feature_engineering
 import time as tm
 import pandas as pd
-
-
-
 
 
 def extract_tasks(filepath):
@@ -13,66 +10,63 @@ def extract_tasks(filepath):
     :return: a list with door entrance data (when subject entered the room to begin a task)
     '''
 
-
-    f = open(filepath,'r')
+    f = open(filepath, 'r')
 
     entrance = []
 
-    #for every line in the file
+    # for every line in the file
     for i in f:
         tstamp = ''
-    #if line is too short trash it
+        # if line is too short trash it
         if len(i) < 50:
             continue
-    #get sensor id and status
+            # get sensor id and status
         sensor = i[:3]
         if i[9:11] == 'ON':
             status = 'on'
         else:
             status = 'off'
 
-    #after the long line of sensor name get timestamp
+            # after the long line of sensor name get timestamp
         for j in i[70:]:
             if j.isdigit():
                 tstamp += (j)
-    #if timestamp too short trash it
+                # if timestamp too short trash it
         if len(tstamp) < 12:
             continue
 
-    #if some writing error occured in file clean it
-        while tstamp[:2] in ('53','56','50','51'):
+            # if some writing error occured in file clean it
+        while tstamp[:2] in ('53', '56', '50', '51'):
             tstamp = tstamp[2:]
 
-    #take only hour,minute,second from timestamp
+            # take only hour,minute,second from timestamp
         tstamp = tstamp[6:]
 
-    #convert string into actual timestamp
-        ttstamp = tm.strptime(tstamp[:2]+' '+tstamp[2:4]+' '+tstamp[4:6],'%H %M %S')
+        # convert string into actual timestamp
+        ttstamp = tm.strptime(tstamp[:2] + ' ' + tstamp[2:4] + ' ' + tstamp[4:6], '%H %M %S')
 
-    #only consider door sensor on
-    #TODO: can add other sensors here
-    #NOTE: Other sensors are active when off (not linked)
+        # only consider door sensor on
+        # TODO: can add other sensors here
+        # NOTE: Other sensors are active when off (not linked)
 
         if sensor == 'a53' and status == 'on':
             entrance.append(ttstamp)
 
-
-    #only consider when subject enters the room, not when exits (odd times, so even in the list)
+    # only consider when subject enters the room, not when exits (odd times, so even in the list)
     entrance = entrance[0::2]
 
     return entrance
 
-def split_tasks(data, subject, path_to_sensor):
 
+def split_tasks(data, subject, path_to_sensor):
     '''
     :param data: pandas df for a subject
     :param subject: subject number as a string
     :return: 6tuple of dataframes with data per task
     '''
 
-    #tasks = extract_tasks('../data/data_recordings_master/binary/18-10-16_sensors_'+subject+'.txt')
+    # tasks = extract_tasks('../data/data_recordings_master/binary/18-10-16_sensors_'+subject+'.txt')
     tasks = extract_tasks(path_to_sensor)
-    
 
     columns = ['subject',
                'frameId', 'time', 'trackingId',
@@ -106,9 +100,9 @@ def split_tasks(data, subject, path_to_sensor):
     task5 = []
     all_tasks = []
 
-    for i,r in data.iterrows():
+    for i, r in data.iterrows():
 
-        dtime = tm.strptime(r['time'][11:19],'%H:%M:%S' )
+        dtime = tm.strptime(r['time'][11:19], '%H:%M:%S')
 
         if dtime > tasks[5]:
             task5.append(r)
@@ -135,17 +129,17 @@ def split_tasks(data, subject, path_to_sensor):
     t4 = pd.DataFrame(task4, columns=columns)
     t5 = pd.DataFrame(task5, columns=columns)
 
-    return t0,t1,t2,t3,t4,t5
+    return t0, t1, t2, t3, t4, t5
+
 
 def get_task_column(data, path_to_sensor):
-    
     tasks = extract_tasks(path_to_sensor)
-    
-    task_column = []
-    
-    for i,r in data.iterrows():
 
-        dtime = tm.strptime(r['time'][11:19],'%H:%M:%S' )
+    task_column = []
+
+    for i, r in data.iterrows():
+
+        dtime = tm.strptime(r['time'][11:19], '%H:%M:%S')
 
         if dtime > tasks[5]:
             task_column.append(5)
@@ -164,11 +158,12 @@ def get_task_column(data, path_to_sensor):
 
         if (dtime < tasks[1]) and (dtime > tasks[0]):
             task_column.append(0)
-    
+
     return task_column
-    
-#%%
-    """
+
+
+# %%
+"""
 import glob
 all_subjects = ['subject'+str(i) for i in range(21,48)]
 all_subjects = all_subjects+['subject50']
@@ -199,4 +194,5 @@ for subject_df in all_subjects_dfs:
     print 'len task column: ', len(col), ' len dataframe: ', len(subject_df)
     if len(col)!=len(subject_df):
         print 'Alarm!'
-        failed.append(subject)"""
+        failed.append(subject)
+"""
