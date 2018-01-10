@@ -1,40 +1,68 @@
 import pickle
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.model_selection import train_test_split
+from sklearn.gaussian_process.kernels import RBF, RationalQuadratic,ConstantKernel
+from sklearn.svm import SVR
+from sklearn.linear_model import BayesianRidge
+from sklearn.ensemble import RandomForestRegressor
+
 
 def main(path_to_pickle, print_predictions=True):
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
-    
+
     big5 = ['extraversion', 'agreeableness', 'conscientiousness', 'neuroticism', 'openness_to_experience']
-    potential_features = [col for col in list(all_features_per_task[0].columns) if not col in big5+['subject', 'index', 'task']]
-    #train models for extraversion per task
-    
+    potential_features = [col for col in list(all_features_per_task[0].columns) if
+                          not col in big5 + ['subject', 'index', 'task']]
+    # train models for extraversion per task
+
+    mean_score = 0
+    acc_no = 0
     task_no = 0
     big5_no = 0
     for task_no in range(6):
-        #var_features = list(all_features_per_task[task_no][potential_features].var().index[(all_features_per_task[task_no][potential_features].var()>0.001).values])
+        # var_features = list(all_features_per_task[task_no][potential_features].var().index[(all_features_per_task[task_no][potential_features].var()>0.001).values])
         for big5_no in range(5):
             X_train, X_test, y_train, y_test = train_test_split(
-                    all_features_per_task[task_no][potential_features],
-                    all_features_per_task[task_no][big5[big5_no]],
-                    test_size=0.2, random_state=42)
-            
-            model = LinearRegression(fit_intercept=True,
-                                     normalize=True,
-                                     copy_X=True,
-                                     n_jobs=1)
+                all_features_per_task[task_no][potential_features],
+                all_features_per_task[task_no][big5[big5_no]],
+                test_size=0.2, random_state=42)
+
+
+            #model = LinearRegression(fit_intercept=True,normalize=True,copy_X=True, n_jobs=1)
+            #0 good estim
+            model = GaussianProcessRegressor (kernel=None, alpha=1e-10, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+            #6 good estim
+            #model = SVR(kernel='rbf', degree=3, gamma='auto', coef0=0.0, tol=0.001, C=10, epsilon=0.1, shrinking=True, cache_size=200, verbose=False, max_iter=-1)
+            #4 good estim
+            #model = BayesianRidge(n_iter=300, tol=0.001, alpha_1=1e-06, alpha_2=1e-06, lambda_1=1e-06, lambda_2=1e-06, compute_score=False, fit_intercept=True, normalize=False, copy_X=True, verbose=False)
+            #2 good estim
+            #model = RandomForestRegressor(n_estimators=1000, criterion='mse', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features='auto', max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0, warm_start=False)
+            #5 good estim
+
             model.fit(X_train, y_train)
             score = model.score(X_test, y_test)
             print '***\nRegression for "{0}" from observing task {1}.\nScore: {2}'.format(big5[big5_no], task_no, score)
             prediction = model.predict(X_test)
-            if print_predictions:
-                print '*'*10
+
+            #if False:
+            if score > 0.0:
+                mean_score += score
+                acc_no += 1
+                print '*' * 10
                 print 'Predictions'
-                print'*'*10
+                print '*' * 10
                 for pred_no, pred in enumerate(prediction):
                     print 'Prediction: {0}\nActual: {1}'.format(pred, y_test.values[pred_no])
-                print
-    
-if __name__=="__main__":
-    main(path_to_pickle='../pickle_data/all_features_per_task.p', print_predictions=False)
+
+                    print
+    if acc_no > 0:
+        mean_score /= acc_no
+
+    print '\n\n______ Total Accurate Predictions:  ' + str(acc_no)
+    print '______ Mean Score = '+ str(mean_score)
+
+
+if __name__ == "__main__":
+    main(path_to_pickle='all_features_per_task.p')
