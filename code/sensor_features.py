@@ -16,16 +16,11 @@ def extract_features(df):
 
 def get_features(df):
     some = []
-    subject_no = df['subject_number'][0]
-    i = subject_no
-    while True:
+    for i in df['subject_number'].unique():
         df_subject = df[df['subject_number'] == i]
         features_for_subject = features_for_single_subject(df_subject)
         features_for_subject['subject_number'] = int(i)
         some.append(features_for_subject)
-        i += 1
-        if df[df['subject_number'] == i].size == 0:
-            break
     df_return = pd.DataFrame(some)
     df_return = df_return.fillna(0)
     return df_return

@@ -212,8 +212,6 @@ def sensor_data_per_task(path, task_number=1):
     rows_in_time_frame_task = []
     for i in range(len(timings)):
         for row in df_per_subject[i]:
-            x = datetime.time(row['datetime'])
-            y = time(timings[i][0][3], timings[i][0][4], timings[i][0][5])
             if task_number == 6:
                 if time(timings[i][5][3], timings[i][5][4], timings[i][5][5]) > datetime.time(row['datetime']):
                     rows_in_time_frame_task.append(row)
@@ -230,16 +228,20 @@ def sensor_data_per_task(path, task_number=1):
 def main():
     path = '../data/behavior_AND_personality_dataset/binary/'
     path2 = '../data/data_recordings_master/binary/'
+    # Over all tasks:
     # df = sensor_data_to_data_frame(path)
     # df2 = sensor_data_to_data_frame('../data/data_recordings_master/binary/')
     # print df
     # print df2
     # print sensor_features.extract_features(df)
     # print sensor_features.extract_features(df2)
-    # df = sensor_data_per_task(path, 6)
-    # print sensor_features.extract_features(df)
-    # df2 = sensor_data_per_task(path2, 4)
-    # print sensor_features.extract_features(df2)
+    # Per task:
+    # for i in range(1, 7):
+    #     df = sensor_data_per_task(path, i)
+    #     print sensor_features.extract_features(df)
+    # for i in range(4, 5):
+    #     df2 = sensor_data_per_task(path2, i)
+    #     print sensor_features.extract_features(df2)
 
 
 class BinarySensorData:
