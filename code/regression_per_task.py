@@ -99,7 +99,7 @@ def main(path_to_pickle, print_predictions=True, pca=False):
                     prediction = model.predict(X_test)
                     score = model.score(X_test, y_test)
                 
-                print score
+                #print score
 
                 if score > predictions[task_no,big5_no]:
                     predictions[task_no, big5_no] = score
@@ -113,7 +113,7 @@ def main(path_to_pickle, print_predictions=True, pca=False):
                     mean_score += score
                     acc_no += 1
                     print '*' * 10
-                    print 'Predictions'
+                    print 'Predictions for {0} from task {1}.'.format(big5[big5_no], task_no)
                     print '*' * 10
                     for pred_no, pred in enumerate(prediction):
                         print 'Prediction: {0}\nActual: {1}'.format(pred, y_test.values[pred_no])
