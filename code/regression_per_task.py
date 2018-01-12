@@ -14,12 +14,15 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
 from  sklearn.ensemble import AdaBoostRegressor
 
-def main(path_to_pickle, print_predictions=True):
+import featureSpaceProcessing
+
+def main(path_to_pickle, print_predictions=True, pca=False):
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
     big5 = ['extraversion', 'agreeableness', 'conscientiousness', 'neuroticism', 'openness_to_experience']
     potential_features = [col for col in list(all_features_per_task[0].columns) if
                           not col in big5 + ['subject', 'index', 'task']]
+    
     # train models for extraversion per task
 
     models = [
@@ -57,30 +60,55 @@ def main(path_to_pickle, print_predictions=True):
         acc_no = 0
         task_no = 0
         big5_no = 0
+        test_size = 0.3
 
         for task_no in range(6):
             # var_features = list(all_features_per_task[task_no][potential_features].var().index[(all_features_per_task[task_no][potential_features].var()>0.001).values])
 
             for big5_no in range(5):
-                X_train, X_test, y_train, y_test = train_test_split(
-                    all_features_per_task[task_no][potential_features],
-                    all_features_per_task[task_no][big5[big5_no]],
-                    test_size=0.2, random_state=42)
-
 
                 model = models[mod]
 
-                model.fit(X_train, y_train)
-                score = model.score(X_test, y_test)
+                if pca:
+                    
+                    X_train, X_test, y_train, y_test = train_test_split(
+                    all_features_per_task[task_no],
+                    all_features_per_task[task_no][big5[big5_no]],
+                    test_size=test_size, random_state=42)
+
+                    pca, features_to_use, tmp = featureSpaceProcessing.perform_pca_after_feature_selection(X_train,
+                                                                                                           potential_features,
+                                                                                                           big5[big5_no],
+                                                                                                           n_var_features=10,
+                                                                                                           n_cor_features=10)
+                    
+                    X_train_transformed = pca.transform(X_train[features_to_use])
+                    X_test_transformed = pca.transform(X_test[features_to_use])
+                    
+                    model.fit(X_train_transformed, y_train)
+                    prediction = model.predict(X_test_transformed)
+                    score = model.score(X_test_transformed, y_test)
+                    
+                else:
+                    X_train, X_test, y_train, y_test = train_test_split(
+                    all_features_per_task[task_no][potential_features],
+                    all_features_per_task[task_no][big5[big5_no]],
+                    test_size=test_size, random_state=42)
+                    
+                    model.fit(X_train, y_train)
+                    prediction = model.predict(X_test)
+                    score = model.score(X_test, y_test)
+                
+                print score
 
                 if score > predictions[task_no,big5_no]:
                     predictions[task_no, big5_no] = score
                     best_models[task_no, big5_no] = mod_names[mod]
+                    
 
                 #print '***\nRegression for "{0}" from observing task {1}.\nScore: {2}'.format(big5[big5_no], task_no, score)
-                prediction = model.predict(X_test)
 
-                if False:
+                if print_predictions:
                 #if score > 0.0:
                     mean_score += score
                     acc_no += 1
@@ -110,4 +138,4 @@ def main(path_to_pickle, print_predictions=True):
     plt.show()
 
 if __name__ == "__main__":
-    main(path_to_pickle='../pickle_data/feature_dataframes/all_features_per_task.p')
+    main(path_to_pickle='../pickle_data/feature_dataframes/all_features_per_task.p', print_predictions=True, pca=True)
