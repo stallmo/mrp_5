@@ -22,7 +22,8 @@ The requirements.txt should contain all packages that are needed to run the code
   * note: due to a duplicate subject20, files containing subject20 in their filename in data_recordings_master/ must be changed to subject50 
 * pickle_data
   * all pickle files go here
-    * especially pickled feature dataframes
+    * pickled feature dataframes
+    * persisted ML-models
 
 ### Basic proceeding for adding code
 (eventually create issue)
