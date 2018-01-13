@@ -16,7 +16,8 @@ from  sklearn.ensemble import AdaBoostRegressor
 
 import featureSpaceProcessing
 
-def main(path_to_pickle, print_predictions=True, pca=False):
+def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_var=10, n_pca_cor = 10, variance_features = None, correlation_features = None):
+    
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
     big5 = ['extraversion', 'agreeableness', 'conscientiousness', 'neuroticism', 'openness_to_experience']
@@ -35,7 +36,7 @@ def main(path_to_pickle, print_predictions=True, pca=False):
         # 4 good estim
         BayesianRidge(n_iter=300, tol=0.001, alpha_1=1e-06, alpha_2=1e-06, lambda_1=1e-06, lambda_2=1e-06, compute_score=False, fit_intercept=True, normalize=False, copy_X=True, verbose=False),
         # 2 good estim
-        RandomForestRegressor(n_estimators=1000, criterion='mse', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features='auto', max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0, warm_start=False),
+        #RandomForestRegressor(n_estimators=1000, criterion='mse', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features='auto', max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0, warm_start=False),
         # 5 good estim
         KNeighborsRegressor(n_neighbors=3, weights='uniform', algorithm='auto', leaf_size=30, p=2, metric='euclidean', metric_params=None, n_jobs=1),
         # 7 good estim
@@ -52,15 +53,16 @@ def main(path_to_pickle, print_predictions=True, pca=False):
 
 
     for mod in range(len(models)):
-
-        print models[mod]
-        print '\n ---------------------- \n'
+        
+        if print_extended:
+            print models[mod]
+            print '\n ---------------------- \n'
 
         mean_score = 0
         acc_no = 0
         task_no = 0
         big5_no = 0
-        test_size = 0.3
+        #test_size = 0.2
 
         for task_no in range(6):
             # var_features = list(all_features_per_task[task_no][potential_features].var().index[(all_features_per_task[task_no][potential_features].var()>0.001).values])
@@ -79,9 +81,8 @@ def main(path_to_pickle, print_predictions=True, pca=False):
                     pca, features_to_use, tmp = featureSpaceProcessing.perform_pca_after_feature_selection(X_train,
                                                                                                            potential_features,
                                                                                                            big5[big5_no],
-                                                                                                           n_var_features=10,
-                                                                                                           n_cor_features=10)
-                    
+                                                                                                           n_var_features=n_pca_var,
+                                                                                                           n_cor_features=n_pca_cor)
                     X_train_transformed = pca.transform(X_train[features_to_use])
                     X_test_transformed = pca.transform(X_test[features_to_use])
                     
@@ -90,14 +91,41 @@ def main(path_to_pickle, print_predictions=True, pca=False):
                     score = model.score(X_test_transformed, y_test)
                     
                 else:
+                    
                     X_train, X_test, y_train, y_test = train_test_split(
-                    all_features_per_task[task_no][potential_features],
+                    all_features_per_task[task_no],
                     all_features_per_task[task_no][big5[big5_no]],
                     test_size=test_size, random_state=42)
                     
-                    model.fit(X_train, y_train)
-                    prediction = model.predict(X_test)
-                    score = model.score(X_test, y_test)
+                    var_features = []
+                    cor_features = []                    
+                    
+                    if not variance_features is None:
+                        """potential_features = featureSpaceProcessing.top_variance_variables(all_features_per_task,
+                                                                                           potential_features,
+                                                                                           variance_features,
+                                                                                           big5)"""
+                        var_features = featureSpaceProcessing.top_variance_variables(df=X_train,
+                                                                      feature_columns=potential_features,
+                                                                      threshold=variance_features,
+                                                                      remove_from_feature_columns = big5)
+                    
+                    if not correlation_features is None:
+                        #print 'Computing correlation features'
+                        #print X_train
+                        cor_features = featureSpaceProcessing.top_correlated_features(df=X_train,
+                                                                                      feature_columns=potential_features,
+                                                                                      correlate_to=big5[big5_no],
+                                                                                      threshold = correlation_features,
+                                                                                      remove_from_feature_columns = big5)
+
+                    if any([not correlation_features is None, not variance_features is None]):    
+                        potential_features = var_features+cor_features
+                        
+                    #print(potential_features)
+                    model.fit(X_train[potential_features], y_train)
+                    prediction = model.predict(X_test[potential_features])
+                    score = model.score(X_test[potential_features], y_test)
                 
                 #print score
 
@@ -108,7 +136,7 @@ def main(path_to_pickle, print_predictions=True, pca=False):
 
                 #print '***\nRegression for "{0}" from observing task {1}.\nScore: {2}'.format(big5[big5_no], task_no, score)
 
-                if print_predictions:
+                if print_extended:
                 #if score > 0.0:
                     mean_score += score
                     acc_no += 1
@@ -138,4 +166,8 @@ def main(path_to_pickle, print_predictions=True, pca=False):
     plt.show()
 
 if __name__ == "__main__":
-    main(path_to_pickle='../pickle_data/feature_dataframes/all_features_per_task.p', print_predictions=True, pca=True)
+    main(path_to_pickle='../pickle_data/feature_dataframes/all_features_per_task.p',
+         test_size=0.2,
+         print_predictions=False,
+         pca=False,
+         variance_features = 10)
