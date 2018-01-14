@@ -18,3 +18,18 @@ def label(df, cutoff=0.5):
     for trait in traits:
         df[trait + "_label"] = df.apply(_give_labels, axis=1, trait=trait)
 
+#%%
+"""
+import pickle        
+path_to_pickle='../data/all_features_per_task.p'
+all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
+
+label(all_features_per_task[0], cutoff=0.5)
+#%%
+label_cols = [c for c in list(all_features_per_task[0].columns)if c.endswith('_label')]
+label_cols
+#%%
+
+for col in label_cols:
+    print col
+    print sum(all_features_per_task[0][col])"""

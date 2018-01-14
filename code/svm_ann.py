@@ -42,12 +42,13 @@ def main(path_to_pickle, print_predictions=True):
                 test_size=0.15, random_state=42)
 
 
-            #model = SVC(C=1.0, kernel='rbf', degree=3, gamma='auto', coef0=0.0, shrinking=True, probability=False, tol=0.001, cache_size=500, class_weight=None, verbose=False, max_iter=-1, decision_function_shape='ovr', random_state=None)
-            model = MLPClassifier(hidden_layer_sizes=(100, ), activation='logistic', solver='sgd', alpha=0.0001, batch_size='auto', learning_rate='adaptive', learning_rate_init=0.001, power_t=0.5, max_iter=500, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
+            model = SVC(C=1.0, kernel='rbf', degree=3, gamma='auto', coef0=0.0, shrinking=True, probability=False, tol=0.001, cache_size=500, class_weight=None, verbose=False, max_iter=-1, decision_function_shape='ovr', random_state=None)
+            #model = MLPClassifier(hidden_layer_sizes=(100, ), activation='logistic', solver='sgd', alpha=0.0001, batch_size='auto', learning_rate='adaptive', learning_rate_init=0.001, power_t=0.5, max_iter=500, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
 
 
             model.fit(X_train, y_train)
             score = model.score(X_test, y_test)
+            print 'score for "{0}" from task {1}: {2}'.format(big5[big5_no]+"_label", task_no, score)
 
             if score > predictions[task_no,big5_no]:
                 predictions[task_no, big5_no] = score
@@ -55,6 +56,7 @@ def main(path_to_pickle, print_predictions=True):
 
             #print '***\nRegression for "{0}" from observing task {1}.\nScore: {2}'.format(big5[big5_no], task_no, score)
             prediction = model.predict(X_test)
+            print prediction
 
     if acc_no > 0:
         mean_score /= acc_no
@@ -77,4 +79,4 @@ def main(path_to_pickle, print_predictions=True):
     plt.show()
 
 if __name__ == "__main__":
-    main(path_to_pickle='all_features_per_task.p')
+    main(path_to_pickle='../pickle_data/feature_dataframes/all_features_per_task.p')

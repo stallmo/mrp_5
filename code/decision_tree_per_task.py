@@ -48,4 +48,4 @@ def main(path_to_pickle, label_cutoff=None):
 
 
 if __name__ == '__main__':
-    main("../pickle_data/all_features_per_task.p")
+    main('../pickle_data/feature_dataframes/all_features_per_task.p')
