@@ -45,11 +45,14 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
         AdaBoostRegressor(base_estimator=None, n_estimators=50, learning_rate=1.0, loss='linear', random_state=None),
     ]
 
-    mod_names = ['Lin_Reg', 'Gauss_P', 'SVM', 'Bayes_R', 'Rand_F', 'KNN', 'ANN', 'Ada_B']
+    #mod_names = ['Lin_Reg', 'Gauss_P', 'SVM', 'Bayes_R', 'Rand_F', 'KNN', 'ANN', 'Ada_B']
+    mod_names = ['Lin_Reg', 'Gauss_P', 'SVM', 'Bayes_R', 'KNN', 'ANN', 'Ada_B']
 
     predictions = np.zeros((6,5))-1
     best_models = np.chararray((6,5), itemsize = 10)
     best_models[:] = 'Nan'
+    models_dict = _init_models_dict()
+    #models_dict = {}
 
 
     for mod in range(len(models)):
@@ -62,7 +65,8 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
         acc_no = 0
         task_no = 0
         big5_no = 0
-        #test_size = 0.2
+        #test_sie = 0.2
+        model = models[mod]
 
         for task_no in range(6):
             # var_features = list(all_features_per_task[task_no][potential_features].var().index[(all_features_per_task[task_no][potential_features].var()>0.001).values])
@@ -70,14 +74,13 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                          not col in big5 + ['subject', 'index', 'task']]
 
             for big5_no in range(5):
-
-                model = models[mod]
                 
                 X_train, X_test, y_train, y_test = train_test_split(
                     all_features_per_task[task_no],
                     all_features_per_task[task_no][big5[big5_no]],
                     test_size=test_size, random_state=42)
-
+                
+                pca = False #remove pca
                 if pca:
                     
                     X_train, X_test, y_train, y_test = train_test_split(
@@ -104,7 +107,7 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                     all_features_per_task[task_no][big5[big5_no]],
                     test_size=test_size, random_state=42)
                     
-                    var_features = []
+                    #var_features = []
                     cor_features = []                    
                     
                     if not variance_features is None:
@@ -127,7 +130,10 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                                                                                       remove_from_feature_columns = big5)
 
                     if any([not correlation_features is None, not variance_features is None]):    
-                        potential_features = var_features+cor_features
+                        print len(cor_features)
+                        #potential_features = var_features+cor_features #ignore var features
+                        potential_features = cor_features
+                        print len(potential_features)
                         
                     #print(potential_features)
                     model.fit(X_train[potential_features], y_train)
@@ -137,8 +143,12 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                 #print score
 
                 if score > predictions[task_no,big5_no]:
+                    print task_no, big5_no, model
                     predictions[task_no, big5_no] = score
-                    best_models[task_no, big5_no] = mod_names[mod]
+                    best_models[task_no, big5_no] = mod_names[mod]                    
+                    #save model in dictionary
+                    models_dict['task'+str(task_no)]['trait'+str(big5_no)]['model'] = model
+                    models_dict.get('task'+str(task_no)).get('trait'+str(big5_no))['feature_columns'] = list(potential_features)
                     
 
                 #print '***\nRegression for "{0}" from observing task {1}.\nScore: {2}'.format(big5[big5_no], task_no, score)
@@ -171,10 +181,52 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
 
     sns.heatmap(predictions, annot=True)
     plt.show()
+    
+    return models_dict
 
-if __name__ == "__main__":
+def _init_models_dict():
+    """trait_dict = {'model':None,
+                  'feature_columns': None}
+    task_dict = {'trait'+str(i):{'model':None,
+                  'feature_columns': None} for i in range(5)}"""
+    
+    models_dict = {'task'+str(i):
+                        {'trait'+str(i):
+                            {'model':None,
+                             'feature_columns': None}
+                        for i in range(5)}
+                    for i in range(6) }
+    return models_dict
+
+"""if __name__ == "__main__":
     main(path_to_pickle='../pickle_data/feature_dataframes/all_features_per_task.p',
          test_size=0.2,
          print_predictions=False,
          pca=False,
          variance_features = 10)
+#%%
+path_to_pickle = '../pickle_data/feature_dataframes/all_features_per_task_w_sensor_norm.p'
+test_size = 0.2
+
+models_dict = main(path_to_pickle=path_to_pickle,
+                         test_size = test_size,
+                         print_extended=False,
+                         pca=False,
+                         variance_features = 0,
+                         correlation_features=8)
+#%%
+models_dict['task0']['trait0']['feature_columns']
+#%%
+feature_dfs = pickle.load(open(path_to_pickle, 'rb'))
+feature_dfs[0].head()
+#%%
+model = models_dict['task0']['trait0']['model']
+cols = models_dict['task0']['trait0']['feature_columns']
+print cols
+preds = model.predict(feature_dfs[0][cols])
+actual = feature_dfs[0]['extraversion']
+for pred, act in zip(preds, actual):
+    print 'Predicted: {0}\nActual: {1}\n'.format(pred, act)
+print 'Score: {0}'.format(model.score(feature_dfs[0][cols], actual))
+#%%
+pickle.dump(models_dict, open('../pickle_data/regression_top7_correlated.p', 'wb'))"""
