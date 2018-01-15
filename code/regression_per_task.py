@@ -21,8 +21,8 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
     big5 = ['extraversion', 'agreeableness', 'conscientiousness', 'neuroticism', 'openness_to_experience']
-    potential_features = [col for col in list(all_features_per_task[0].columns) if
-                          not col in big5 + ['subject', 'index', 'task']]
+    #potential_features = [col for col in list(all_features_per_task[0].columns) if
+    #                      not col in big5 + ['subject', 'index', 'task']]
     
     # train models for extraversion per task
 
@@ -66,10 +66,17 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
 
         for task_no in range(6):
             # var_features = list(all_features_per_task[task_no][potential_features].var().index[(all_features_per_task[task_no][potential_features].var()>0.001).values])
+            potential_features = [col for col in list(all_features_per_task[task_no].columns) if
+                         not col in big5 + ['subject', 'index', 'task']]
 
             for big5_no in range(5):
 
                 model = models[mod]
+                
+                X_train, X_test, y_train, y_test = train_test_split(
+                    all_features_per_task[task_no],
+                    all_features_per_task[task_no][big5[big5_no]],
+                    test_size=test_size, random_state=42)
 
                 if pca:
                     
