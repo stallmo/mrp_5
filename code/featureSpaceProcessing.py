@@ -85,7 +85,7 @@ def _get_top_n_variance_variables(df, feature_columns, n):
     var_features = list(pd.DataFrame(df[feature_columns].var()).sort_values(by=0, ascending=False).index)[:n]
     return var_features
 
-def top_correlated_features(df, feature_columns, correlate_to, threshold, remove_from_feature_columns = None):
+def top_correlated_features(df, feature_columns, correlate_to, threshold, remove_from_feature_columns = None, n_min_vars=3):
     """
     """
     
@@ -93,17 +93,27 @@ def top_correlated_features(df, feature_columns, correlate_to, threshold, remove
         feature_columns = [c for c in feature_columns if not c in remove_from_feature_columns]
     
     if threshold<1:
-        print 'Not implemented yet!'
-        return
+        cor_threshold_vars = _get_correlation_threshold_vars(df, feature_columns, correlate_to, threshold)
+        if len(cor_threshold_vars)>= n_min_vars:
+            return cor_threshold_vars
+        else:
+            return _get_top_n_correlated_features(df, feature_columns, correlate_to, n_min_vars)
     
     else:
         #print 'Getting top n correlated'
         return _get_top_n_correlated_features(df, feature_columns, correlate_to, threshold)
+
+def _get_correlation_threshold_vars(df, feature_columns, correlate_to, threshold):
+    
+    corr_df = df[feature_columns+[correlate_to]].corr().abs().sort_values(by=correlate_to, ascending = False)
+    corr_series = corr_df[correlate_to]
+    cols = [ind for ind, val in zip(corr_series.index, corr_series.values) if val>threshold and ind not in [correlate_to]]
+    return cols
     
 def _get_top_n_correlated_features(df, feature_columns, correlate_to, n):
     
     if not correlate_to in feature_columns:
         feature_columns+=[correlate_to]
         
-    return list(np.abs(df[feature_columns].corr()[correlate_to]).nlargest(n=n).index)[1:]
+    return list(np.abs(df[feature_columns].corr()[correlate_to]).nlargest(n=n+1).index)[1:]
     

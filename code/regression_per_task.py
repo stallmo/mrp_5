@@ -16,7 +16,7 @@ from  sklearn.ensemble import AdaBoostRegressor
 
 import featureSpaceProcessing
 
-def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_var=10, n_pca_cor = 10, variance_features = None, correlation_features = None):
+def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_var=10, n_pca_cor = 10, variance_features = None, correlation_features = None, n_min_corr_vars=3):
     
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
@@ -78,7 +78,7 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                 X_train, X_test, y_train, y_test = train_test_split(
                     all_features_per_task[task_no],
                     all_features_per_task[task_no][big5[big5_no]],
-                    test_size=test_size, random_state=42)
+                    test_size=test_size, random_state=24)
                 
                 pca = False #remove pca
                 if pca:
@@ -127,13 +127,14 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                                                                                       feature_columns=potential_features,
                                                                                       correlate_to=big5[big5_no],
                                                                                       threshold = correlation_features,
-                                                                                      remove_from_feature_columns = big5)
+                                                                                      remove_from_feature_columns = big5,
+                                                                                      n_min_vars=n_min_corr_vars)
 
                     if any([not correlation_features is None, not variance_features is None]):    
-                        print len(cor_features)
+                        #print len(cor_features)
                         #potential_features = var_features+cor_features #ignore var features
                         potential_features = cor_features
-                        print len(potential_features)
+                        #print len(potential_features)
                         
                     #print(potential_features)
                     model.fit(X_train[potential_features], y_train)
@@ -143,7 +144,7 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                 #print score
 
                 if score > predictions[task_no,big5_no]:
-                    print task_no, big5_no, model
+                    #print task_no, big5_no, model
                     predictions[task_no, big5_no] = score
                     best_models[task_no, big5_no] = mod_names[mod]                    
                     #save model in dictionary
