@@ -1,4 +1,5 @@
 import pickle
+import copy
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -16,7 +17,7 @@ from  sklearn.ensemble import AdaBoostRegressor
 
 import featureSpaceProcessing
 
-def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_var=10, n_pca_cor = 10, variance_features = None, correlation_features = None, n_min_corr_vars=3):
+def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_var=10, n_pca_cor = 10, variance_features = None, correlation_features = None, n_min_corr_vars=3, only_normal_distributed = False, random_seed=42):
     
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
@@ -72,13 +73,17 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
             # var_features = list(all_features_per_task[task_no][potential_features].var().index[(all_features_per_task[task_no][potential_features].var()>0.001).values])
             potential_features = [col for col in list(all_features_per_task[task_no].columns) if
                          not col in big5 + ['subject', 'index', 'task']]
+            
+            if only_normal_distributed:
+                potential_features = featureSpaceProcessing.select_normally_distributed(all_features_per_task[task_no], potential_features, p_threshold=0.05)[0]
+                #print potential_features
 
             for big5_no in range(5):
                 
                 X_train, X_test, y_train, y_test = train_test_split(
                     all_features_per_task[task_no],
                     all_features_per_task[task_no][big5[big5_no]],
-                    test_size=test_size, random_state=24)
+                    test_size=test_size, random_state=random_seed)
                 
                 pca = False #remove pca
                 if pca:
@@ -102,10 +107,10 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                     
                 else:
                     
-                    X_train, X_test, y_train, y_test = train_test_split(
+                    """X_train, X_test, y_train, y_test = train_test_split(
                     all_features_per_task[task_no],
                     all_features_per_task[task_no][big5[big5_no]],
-                    test_size=test_size, random_state=42)
+                    test_size=test_size, random_state=42)"""
                     
                     #var_features = []
                     cor_features = []                    
@@ -148,8 +153,8 @@ def main(path_to_pickle, test_size=0.2, print_extended=True, pca=False, n_pca_va
                     predictions[task_no, big5_no] = score
                     best_models[task_no, big5_no] = mod_names[mod]                    
                     #save model in dictionary
-                    models_dict['task'+str(task_no)]['trait'+str(big5_no)]['model'] = model
-                    models_dict.get('task'+str(task_no)).get('trait'+str(big5_no))['feature_columns'] = list(potential_features)
+                    models_dict['task'+str(task_no)]['trait'+str(big5_no)]['model'] = copy.deepcopy(model)
+                    models_dict.get('task'+str(task_no)).get('trait'+str(big5_no))['feature_columns'] = copy.deepcopy(potential_features)
                     
 
                 #print '***\nRegression for "{0}" from observing task {1}.\nScore: {2}'.format(big5[big5_no], task_no, score)

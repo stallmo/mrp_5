@@ -2,6 +2,7 @@ from sklearn.decomposition import PCA
 from sklearn.feature_selection import VarianceThreshold
 import pandas as pd
 import numpy as np
+from scipy.stats.mstats import normaltest
 
 def perform_pca_after_feature_selection(df, columns, correlate_to, n_var_features=10, n_cor_features=10):
     """
@@ -54,6 +55,19 @@ def perform_pca_after_feature_selection(df, columns, correlate_to, n_var_feature
     #df_transformed = pd.concat([pd.DataFrame(X_train_transformed, columns=new_column_names), df[other_columns] ], axis=1)
     
     return pca, promising_features, pd.concat([df_transformed, df[other_columns].reset_index().drop('index', axis=1)], axis=1)
+
+def select_normally_distributed(df, all_feature_columns, p_threshold):
+    """
+    """
+    normal = []
+    not_normal = []
+    for feature in all_feature_columns:
+        test, p = normaltest(df[feature])
+        if p<p_threshold:
+            not_normal.append(feature)
+        else:
+            normal.append(feature)
+    return normal, not_normal
 
 def top_variance_variables(df, feature_columns, threshold, remove_from_feature_columns = None):
     """
