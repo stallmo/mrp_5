@@ -2,6 +2,7 @@ from sklearn.decomposition import PCA
 from sklearn.feature_selection import VarianceThreshold
 import pandas as pd
 import numpy as np
+from scipy.stats.mstats import normaltest
 
 def perform_pca_after_feature_selection(df, columns, correlate_to, n_var_features=10, n_cor_features=10):
     """
@@ -55,6 +56,19 @@ def perform_pca_after_feature_selection(df, columns, correlate_to, n_var_feature
     
     return pca, promising_features, pd.concat([df_transformed, df[other_columns].reset_index().drop('index', axis=1)], axis=1)
 
+def select_normally_distributed(df, all_feature_columns, p_threshold):
+    """
+    """
+    normal = []
+    not_normal = []
+    for feature in all_feature_columns:
+        test, p = normaltest(df[feature])
+        if p<p_threshold:
+            not_normal.append(feature)
+        else:
+            normal.append(feature)
+    return normal, not_normal
+
 def top_variance_variables(df, feature_columns, threshold, remove_from_feature_columns = None):
     """
     :type df: pandas dataframe
@@ -85,7 +99,7 @@ def _get_top_n_variance_variables(df, feature_columns, n):
     var_features = list(pd.DataFrame(df[feature_columns].var()).sort_values(by=0, ascending=False).index)[:n]
     return var_features
 
-def top_correlated_features(df, feature_columns, correlate_to, threshold, remove_from_feature_columns = None):
+def top_correlated_features(df, feature_columns, correlate_to, threshold, remove_from_feature_columns = None, n_min_vars=3):
     """
     """
     
@@ -93,17 +107,27 @@ def top_correlated_features(df, feature_columns, correlate_to, threshold, remove
         feature_columns = [c for c in feature_columns if not c in remove_from_feature_columns]
     
     if threshold<1:
-        print 'Not implemented yet!'
-        return
+        cor_threshold_vars = _get_correlation_threshold_vars(df, feature_columns, correlate_to, threshold)
+        if len(cor_threshold_vars)>= n_min_vars:
+            return cor_threshold_vars
+        else:
+            return _get_top_n_correlated_features(df, feature_columns, correlate_to, n_min_vars)
     
     else:
         #print 'Getting top n correlated'
         return _get_top_n_correlated_features(df, feature_columns, correlate_to, threshold)
+
+def _get_correlation_threshold_vars(df, feature_columns, correlate_to, threshold):
+    
+    corr_df = df[feature_columns+[correlate_to]].corr().abs().sort_values(by=correlate_to, ascending = False)
+    corr_series = corr_df[correlate_to]
+    cols = [ind for ind, val in zip(corr_series.index, corr_series.values) if val>threshold and ind not in [correlate_to]]
+    return cols
     
 def _get_top_n_correlated_features(df, feature_columns, correlate_to, n):
     
     if not correlate_to in feature_columns:
         feature_columns+=[correlate_to]
         
-    return list(np.abs(df[feature_columns].corr()[correlate_to]).nlargest(n=n).index)[1:]
+    return list(np.abs(df[feature_columns].corr()[correlate_to]).nlargest(n=n+1).index)[1:]
     
