@@ -80,7 +80,7 @@ def calculate_3Djoint_differences(frames_df, only_for_columns=None):
                 pow(row[joint1_x_name] - row[joint2_x_name], 2) +
                 pow(row[joint1_y_name] - row[joint2_y_name], 2) +
                 pow(row[joint1_z_name] - row[joint2_z_name], 2)
-            ))
+            ), axis=1)
             columns_dict["{}-{}".format(joint1_name, joint2_name)] = differences
 
     differences_df = pd.DataFrame(columns_dict)
