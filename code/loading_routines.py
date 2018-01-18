@@ -45,9 +45,9 @@ def load_df_from_xml(path_to_xml, n_joints=21):
     joints_df = pd.DataFrame(rows, columns=columns)
     
     #add column for task each frame belongs to        
-    task_timestamps = __get_task_timestamps(subject)
-    tasks = joints_df.apply(lambda row: __get_task(row, task_timestamps), axis=1)
-    joints_df['task'] = tasks
+    #task_timestamps = __get_task_timestamps(subject)
+    #tasks = joints_df.apply(lambda row: __get_task(row, task_timestamps), axis=1)
+    #joints_df['task'] = tasks
     
     return joints_df
 
