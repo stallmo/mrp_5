@@ -101,7 +101,7 @@ def ewma_noise_filter(df):
     return pd.ewma(df, span=30)
 
 
-def recalculate_joint_positions(df, joint_name):
+def recalculate_joint_positions(df, joint_name, drop_old=False):
     # Parameter should be the joint names such that the x and y are JOINT_x and JOINT_y respectively.
     # The function adds a JOINT_real_x and JOINT_real_y to the Dataframe
     """
@@ -127,6 +127,10 @@ def recalculate_joint_positions(df, joint_name):
     x_label = joint_name + "_x"
     y_label = joint_name + "_y"
     z_label = joint_name + "_z"
+
+    old_labels = [x_label, y_label, z_label]
+
+
     # calculates the ratio of the of a coordinate axis from the middle
     get_x_ratio = lambda x: (x - middle_x) / middle_x
     get_y_ratio = lambda y: (y - middle_y) / middle_y
@@ -142,4 +146,7 @@ def recalculate_joint_positions(df, joint_name):
 
     df[joint_name + "_real_y"] = df.apply(lambda row: get_y_ratio(row[y_label]) * get_y(row[z_label]), axis=1)
     df[joint_name + "_real_z"] = df[z_label]
+
+    if drop_old:
+        df.drop(old_labels)
     return df
