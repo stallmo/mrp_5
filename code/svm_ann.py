@@ -8,13 +8,17 @@ from sklearn.gaussian_process.kernels import RBF, RationalQuadratic,ConstantKern
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPRegressor, MLPClassifier
 import trait_labeling as tlab
+import featureSpaceProcessing as fSP
 
-def main(path_to_pickle, print_predictions=True):
+def main(path_to_pickle, random_seed, print_predictions=True):
 
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
+
+
     for tasks in all_features_per_task:
         tlab.label(tasks)
+
 
 
     big5 = ['extraversion', 'agreeableness', 'conscientiousness', 'neuroticism', 'openness_to_experience']
@@ -31,15 +35,19 @@ def main(path_to_pickle, print_predictions=True):
     acc_no = 0
     task_no = 0
     big5_no = 0
-
     for task_no in range(6):
         # var_features = list(all_features_per_task[task_no][potential_features].var().index[(all_features_per_task[task_no][potential_features].var()>0.001).values])
 
         for big5_no in range(5):
+
+            task = all_features_per_task[task_no]
+
+            correlated_features = fSP.top_correlated_features(task, potential_features, big5[big5_no], 3)
+
             X_train, X_test, y_train, y_test = train_test_split(
-                all_features_per_task[task_no][potential_features],
-                all_features_per_task[task_no][big5[big5_no]+"_label"],
-                test_size=0.15, random_state=42)
+                task[correlated_features],
+                task[big5[big5_no] + "_label"],
+                test_size=0.15, random_state=random_seed)
 
 
             model = SVC(C=1.0, kernel='rbf', degree=3, gamma='auto', coef0=0.0, shrinking=True, probability=False, tol=0.001, cache_size=500, class_weight=None, verbose=False, max_iter=-1, decision_function_shape='ovr', random_state=None)
@@ -48,7 +56,7 @@ def main(path_to_pickle, print_predictions=True):
 
             model.fit(X_train, y_train)
             score = model.score(X_test, y_test)
-            print 'score for "{0}" from task {1}: {2}'.format(big5[big5_no]+"_label", task_no, score)
+            #print 'score for "{0}" from task {1}: {2}'.format(big5[big5_no]+"_label", task_no, score)
 
             if score > predictions[task_no,big5_no]:
                 predictions[task_no, big5_no] = score
@@ -64,19 +72,24 @@ def main(path_to_pickle, print_predictions=True):
     #print '\n\n______ Total Accurate Predictions:  ' + str(acc_no)
     #print '______ Mean Score = '+ str(mean_score)
 
-    print str(model)+'\n'
+    if print_predictions:
+        print str(model)+'\n'
 
-    print big5
+        print big5
 
-    for i in predictions:
-        print i
-    print '\n'
+        for i in predictions:
+            print i
+        print '\n'
     print 'Average Overall Score:   '+ str(predictions.mean())
 
-
+    return predictions
 
     sns.heatmap(predictions, annot=True)
+    plt.title("Estimator accuracies per trait per task using random seed: {}".format(random_seed))
     plt.show()
 
+
 if __name__ == "__main__":
-    main(path_to_pickle='../pickle_data/feature_dataframes/all_features_per_task.p')
+    main("../pickle_data/feature_dataframes/all_features_restructured.p", 1)
+    #main(path_to_pickle="../pickle_data/feature_dataframes/all_features_per_task_w_sensor_norm.p")
+    #main(path_to_pickle='../pickle_data/feature_dataframes/all_features_per_task.p')

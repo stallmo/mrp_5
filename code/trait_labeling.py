@@ -2,21 +2,20 @@ from enum import Enum
 
 # Gives labels to based on the big 5 personality traits
 
-
-_cutoff = 0.5
 traits = ['extraversion', 'agreeableness', 'conscientiousness', 'neuroticism', 'openness_to_experience']
-def _give_labels(row, trait):
-    if row[trait] > _cutoff:
+def _give_labels(row, trait, cutoff=0.5):
+    #print "using cutoff {} for trait {}".format(cutoff, trait)
+    if row[trait] > cutoff:
         res = 1
     else:
         res = 0
     return res
 
-def label(df, cutoff=0.5):
 
-    _cutoff = cutoff
+def label(df):
+
     for trait in traits:
-        df[trait + "_label"] = df.apply(_give_labels, axis=1, trait=trait)
+        df[trait + "_label"] = df.apply(_give_labels, axis=1, trait=trait, cutoff=df[trait].median())
 
 #%%
 """
