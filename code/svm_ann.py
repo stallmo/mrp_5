@@ -42,7 +42,14 @@ def main(path_to_pickle, random_seed, print_predictions=True):
 
             task = all_features_per_task[task_no]
 
-            correlated_features = fSP.top_correlated_features(task, potential_features, big5[big5_no], 3)
+            correlated_features = fSP.top_correlated_features(df = task,
+                                                              feature_columns = potential_features,
+                                                              correlate_to = big5_labels[big5_no],
+                                                              threshold = 0.3,
+                                                              remove_from_feature_columns=big5_labels+big5,
+                                                              n_min_vars=3)
+            #print 'Features used for classifying {0} from task {1}: {2}'.format(big5_labels[big5_no], task_no, correlated_features)
+            #print
 
             X_train, X_test, y_train, y_test = train_test_split(
                 task[correlated_features],
@@ -64,7 +71,9 @@ def main(path_to_pickle, random_seed, print_predictions=True):
 
             #print '***\nRegression for "{0}" from observing task {1}.\nScore: {2}'.format(big5[big5_no], task_no, score)
             prediction = model.predict(X_test)
-            print prediction
+            if print_predictions:
+                print 'Prediction:', prediction
+                print 'Actual: ', y_test.values
 
     if acc_no > 0:
         mean_score /= acc_no
