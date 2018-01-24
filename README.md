@@ -14,8 +14,9 @@ The requirements.txt should contain all packages that are needed to run the code
   * all python code goes here
 * notebooks
   * all jupyter notebooks go here
+  * note that some of the notebooks also produce the feature dataframes. If needed, they can be exported to .py files
 * data
-  * the data goes in here, but should not be committed! Every developper has the data locally stored.
+  * the data goes in here (has to be added manually)
   * there are two folders:
     1. behavior_AND_personality_dataset (initial dataset)
     2. data_recordings_master (dataset we recorded)
@@ -24,16 +25,3 @@ The requirements.txt should contain all packages that are needed to run the code
   * all pickle files go here
     * pickled feature dataframes
     * persisted ML-models
-
-### Basic proceeding for adding code
-(eventually create issue)
-
-1. create new branch
-2. checkout branch
-3. develop on new branch
-4. commit to new branch
-5. when the code is tested and ready, merge the branch into master
-
-Getting familiar with git: http://rogerdudler.github.io/git-guide/
-
-Useful for installing python and managing virtual environments: https://conda.io/docs/user-guide/install/index.html
