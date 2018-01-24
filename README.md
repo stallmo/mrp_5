@@ -24,4 +24,3 @@ The requirements.txt should contain all packages that are needed to run the code
 * pickle_data
   * all pickle files go here
     * pickled feature dataframes
-    * persisted ML-models
