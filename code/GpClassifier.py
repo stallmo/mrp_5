@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
 import trait_labeling as tlab
 import featureSpaceProcessing as fSP
 
@@ -14,7 +15,7 @@ def main(path_to_pickle, random_seed, print_predictions=True):
 
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
-
+    scores = np.zeros((6,5))-1
 
     for tasks in all_features_per_task:
         tlab.label(tasks)
@@ -66,6 +67,9 @@ def main(path_to_pickle, random_seed, print_predictions=True):
                                               random_state=None,
                                               multi_class='one_vs_rest',
                                               n_jobs=1)
+            scores[task_no, big5_no] = np.array(
+                cross_val_score(model, all_features_per_task[task_no][correlated_features],
+                                all_features_per_task[task_no][big5[big5_no] + "_label"])).mean()
             #model = MLPClassifier(hidden_layer_sizes=(100, ), activation='logistic', solver='sgd', alpha=0.0001, batch_size='auto', learning_rate='adaptive', learning_rate_init=0.001, power_t=0.5, max_iter=500, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
 
 
@@ -101,9 +105,9 @@ def main(path_to_pickle, random_seed, print_predictions=True):
         for i in predictions:
             print i
         print '\n'
-    print 'Average Overall Score:   '+ str(predictions.mean())
+    print 'Average Overall Score:   '+ str(scores.mean())
 
-    return predictions
+    return scores
 
     sns.heatmap(predictions, annot=True)
     plt.title("Estimator accuracies per trait per task using random seed: {}".format(random_seed))

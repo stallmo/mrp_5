@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.gaussian_process.kernels import RBF, RationalQuadratic,ConstantKernel
 from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
 from sklearn.neural_network import MLPRegressor, MLPClassifier
 import trait_labeling as tlab
 import featureSpaceProcessing as fSP
@@ -14,7 +15,7 @@ def main(path_to_pickle, random_seed, print_predictions=True):
 
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
-
+    scores = np.zeros((6,5))-1
 
     for tasks in all_features_per_task:
         tlab.label(tasks)
@@ -63,6 +64,10 @@ def main(path_to_pickle, random_seed, print_predictions=True):
 
             model.fit(X_train, y_train)
             score = model.score(X_test, y_test)
+            
+            scores[task_no, big5_no] = np.array(
+                cross_val_score(model, all_features_per_task[task_no][correlated_features],
+                                all_features_per_task[task_no][big5[big5_no] + "_label"])).mean()
             #print 'score for "{0}" from task {1}: {2}'.format(big5[big5_no]+"_label", task_no, score)
 
             if score > predictions[task_no,big5_no]:
@@ -89,9 +94,9 @@ def main(path_to_pickle, random_seed, print_predictions=True):
         for i in predictions:
             print i
         print '\n'
-    print 'Average Overall Score:   '+ str(predictions.mean())
+    print 'Average Overall Score:   '+ str(scores.mean())
 
-    return predictions
+    return scores
 
     sns.heatmap(predictions, annot=True)
     plt.title("Estimator accuracies per trait per task using random seed: {}".format(random_seed))

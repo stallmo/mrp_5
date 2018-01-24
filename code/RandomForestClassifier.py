@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.gaussian_process.kernels import RBF, RationalQuadratic,ConstantKernel
 from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 import trait_labeling as tlab
 import featureSpaceProcessing as fSP
@@ -14,6 +15,7 @@ def main(path_to_pickle, random_seed, print_predictions=True):
 
     all_features_per_task = pickle.load(open(path_to_pickle, 'rb'))
 
+    scores = np.zeros((6,5))-1
 
 
     for tasks in all_features_per_task:
@@ -74,20 +76,26 @@ def main(path_to_pickle, random_seed, print_predictions=True):
                                            verbose=0,
                                            warm_start=False,
                                            class_weight=None)
+            
+            scores[task_no, big5_no] = np.array(
+                cross_val_score(model, all_features_per_task[task_no][correlated_features],
+                                all_features_per_task[task_no][big5[big5_no] + "_label"])).mean()
+            #print cross_val_score(model, all_features_per_task[task_no][correlated_features], all_features_per_task[task_no][big5[big5_no] + "_label"]).mean()
             #model = MLPClassifier(hidden_layer_sizes=(100, ), activation='logistic', solver='sgd', alpha=0.0001, batch_size='auto', learning_rate='adaptive', learning_rate_init=0.001, power_t=0.5, max_iter=500, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
 
 
             model.fit(X_train, y_train)
-            score = model.score(X_test, y_test)
+            #score = model.score(X_test, y_test)
             #for feature, importance in zip(correlated_features, model.feature_importances_):
                 #print 'Importance of feature "{0}" for predicting "{1}" from task "{2}": {3}'.format(feature, big5_labels[big5_no], task_no, importance)
             ind_most_important = np.argmax(model.feature_importances_)
             feat_1 = correlated_features[ind_most_important]
-            print 'Most important feature for predicting "{0}" from task "{1}": {2}. Score: {3}'.format(big5_labels[big5_no], task_no, feat_1, model.feature_importances_[ind_most_important])
+            if print_predictions:
+                print 'Most important feature for predicting "{0}" from task "{1}": {2}. Score: {3}'.format(big5_labels[big5_no], task_no, feat_1, model.feature_importances_[ind_most_important])
             #print 'score for "{0}" from task {1}: {2}'.format(big5[big5_no]+"_label", task_no, score)
 
-            if score > predictions[task_no,big5_no]:
-                predictions[task_no, big5_no] = score
+            #if score > predictions[task_no,big5_no]:
+            #    predictions[task_no, big5_no] = score
 
 
             #print '***\nRegression for "{0}" from observing task {1}.\nScore: {2}'.format(big5[big5_no], task_no, score)
@@ -110,11 +118,11 @@ def main(path_to_pickle, random_seed, print_predictions=True):
         for i in predictions:
             print i
         print '\n'
-    print 'Average Overall Score:   '+ str(predictions.mean())
+    print 'Average Overall Score:   '+ str(scores.mean())
 
-    return predictions
+    return scores
 
-    sns.heatmap(predictions, annot=True)
+    sns.heatmap(scores, annot=True)
     plt.title("Estimator accuracies per trait per task using random seed: {}".format(random_seed))
     plt.show()
 
